@@ -45,7 +45,7 @@ const theme = createTheme({
 const API_BASE_URL = "https://backendd-q0zc.onrender.com";
 
 function TerminosPCA() {
-  const [terminos, setTerminos] = useState([]);
+  const [terminoActivo, setTerminoActivo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const theme = useTheme();
@@ -55,9 +55,9 @@ function TerminosPCA() {
     const fetchTerminos = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/terminos`);
-        // Si el backend devuelve un solo objeto, lo convertimos en array para consistencia
-        const terminosData = Array.isArray(response.data) ? response.data : [response.data];
-        setTerminos(terminosData);
+        // Filtrar para obtener solo el término activo
+        const termino = response.data.find(t => t.estado === 'activo');
+        setTerminoActivo(termino || null);
         setLoading(false);
       } catch (err) {
         console.error("Error al obtener los términos:", err);
@@ -89,35 +89,33 @@ function TerminosPCA() {
             Términos y Condiciones de la Empresa
           </Typography>
           <Divider sx={{ my: 2 }} />
-          {terminos.length === 0 ? (
+          {!terminoActivo ? (
             <Typography align="center" color="text.secondary">
-              No hay términos y condiciones disponibles.
+              No hay términos y condiciones activos disponibles.
             </Typography>
           ) : (
-            terminos.map((termino) => (
-              <div key={termino.id}>
-                <Typography variant="h6" gutterBottom>
-                  {termino.titulo}
-                </Typography>
-                <List>
-                  {termino.contenido
-                    .split("\n") // Divide el contenido por saltos de línea
-                    .filter((line) => line.trim()) // Filtra líneas vacías
-                    .map((line, index) => (
-                      <ListItem key={index} disablePadding>
-                        <ListItemText
-                          primary={
-                            <Typography variant="body2" color="text.primary">
-                              • {line.trim()}
-                            </Typography>
-                          }
-                        />
-                      </ListItem>
-                    ))}
-                </List>
-                <Divider sx={{ my: 2 }} />
-              </div>
-            ))
+            <div>
+              <Typography variant="h6" gutterBottom>
+                {terminoActivo.titulo}
+              </Typography>
+              <List>
+                {terminoActivo.contenido
+                  .split("\n") // Divide el contenido por saltos de línea
+                  .filter((line) => line.trim()) // Filtra líneas vacías
+                  .map((line, index) => (
+                    <ListItem key={index} disablePadding>
+                      <ListItemText
+                        primary={
+                          <Typography variant="body2" color="text.primary">
+                            • {line.trim()}
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+              </List>
+              <Divider sx={{ my: 2 }} />
+            </div>
           )}
         </Container>
       </Box>

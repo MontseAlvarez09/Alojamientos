@@ -42,10 +42,10 @@ const theme = createTheme({
 });
 
 // URL base del backend para desarrollo local
-const API_BASE_URL = "https://backendd-q0zc.onrender.com";
+const API_BASE_URL = "https://backendd-q0zc.onrender.com"; // Cambia esto según tu configuración
 
 function MisionPCA() {
-  const [mision, setMision] = useState([]);
+  const [misionActiva, setMisionActiva] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const theme = useTheme();
@@ -55,11 +55,13 @@ function MisionPCA() {
     const fetchMision = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/mision`);
-        setMision(response.data);
+        // Filtrar para obtener solo la misión activa
+        const mision = response.data.find(m => m.estado === 'activo');
+        setMisionActiva(mision || null);
         setLoading(false);
       } catch (err) {
         console.error("Error al obtener la Misión:", err);
-        setError("No se pudieron cargar la Misión. Intenta de nuevo más tarde.");
+        setError("No se pudo cargar la Misión. Intenta de nuevo más tarde.");
         setLoading(false);
       }
     };
@@ -67,7 +69,7 @@ function MisionPCA() {
     fetchMision();
   }, []);
 
-  if (loading) return <Typography align="center">Cargando Mision...</Typography>;
+  if (loading) return <Typography align="center">Cargando Misión...</Typography>;
   if (error) return <Typography align="center" color="error">{error}</Typography>;
 
   return (
@@ -84,34 +86,30 @@ function MisionPCA() {
       >
         <Container maxWidth="lg">
           <Typography variant="h6" align="center" gutterBottom>
-            Mision de la Empresa
+            Misión de la Empresa
           </Typography>
           <Divider sx={{ my: 2 }} />
-          {mision.length === 0 ? (
+          {!misionActiva ? (
             <Typography align="center" color="text.secondary">
-              No hay mision disponibles.
+              No hay misión activa disponible.
             </Typography>
           ) : (
             <List>
-              {mision.map((mision) => (
-                <React.Fragment key={mision.id}>
-                  <ListItem alignItems="flex-start">
-                    <ListItemText
-                      primary={mision.titulo}
-                      secondary={
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.primary"
-                        >
-                          {mision.contenido}
-                        </Typography>
-                      }
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                </React.Fragment>
-              ))}
+              <ListItem alignItems="flex-start">
+                <ListItemText
+                  primary={misionActiva.titulo}
+                  secondary={
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      color="text.primary"
+                    >
+                      {misionActiva.contenido}
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <Divider component="li" />
             </List>
           )}
         </Container>

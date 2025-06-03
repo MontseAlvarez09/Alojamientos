@@ -23,6 +23,11 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+
+// Base URL for API (working locally)
+const API_BASE_URL = 'https://backendd-q0zc.onrender.com';
 
 const Hoteles = () => {
   const [hoteles, setHoteles] = useState([]);
@@ -35,12 +40,20 @@ const Hoteles = () => {
     descripcion: '',
     servicios: '',
     imagen: null,
-    removeImage: false, // Para manejar la eliminación de la imagen
+    removeImage: false,
+    latitud: '',
+    longitud: '',
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [locationError, setLocationError] = useState('');
+  const [habitaciones, setHabitaciones] = useState([]);
+  const [selectedHotelId, setSelectedHotelId] = useState(null);
+  const [openHabitacionesModal, setOpenHabitacionesModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   useEffect(() => {
     fetchHoteles();
@@ -48,7 +61,7 @@ const Hoteles = () => {
 
   const fetchHoteles = async () => {
     try {
-      const response = await axios.get('https://backendd-q0zc.onrender.com/api/hoteles');
+      const response = await axios.get(`${API_BASE_URL}/api/hoteles`);
       const hotelesData = response.data.map(hotel => {
         let imagenParsed = null;
         try {
@@ -73,23 +86,173 @@ const Hoteles = () => {
     }
   };
 
+  const fetchHabitaciones = async (hotelId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/hoteles/${hotelId}/cuartos`);
+      setHabitaciones(response.data);
+      setSelectedHotelId(hotelId);
+      setOpenHabitacionesModal(true);
+      setErrorMessage('');
+    } catch (error) {
+      console.error('Error al obtener habitaciones:', error);
+      setErrorMessage('Error al cargar las habitaciones. Intente de nuevo.');
+    }
+  };
+
+  const validateField = (name, value) => {
+    let error = '';
+    switch (name) {
+      case 'nombrehotel':
+        if (!value.trim()) error = 'El nombre del hotel es requerido';
+        else if (value.trim().length < 3) error = 'El nombre debe tener al menos 3 caracteres';
+        else if (value.trim().length > 100) error = 'El nombre no puede exceder 100 caracteres';
+        break;
+      case 'telefono':
+        if (value && !/^\d{10}$/.test(value)) error = 'El teléfono debe contener exactamente 10 dígitos';
+        break;
+      case 'correo':
+        if (!value.trim()) error = 'El correo electrónico es requerido';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Ingrese un correo electrónico válido';
+        break;
+      case 'numhabitacion':
+        if (!value) error = 'El número de habitaciones es requerido';
+        else if (isNaN(value) || parseInt(value) < 1) error = 'Debe tener al menos 1 habitación';
+        else if (parseInt(value) > 10000) error = 'El número de habitaciones no puede exceder 10,000';
+        break;
+      case 'direccion':
+        if (value && value.length > 200) error = 'La dirección no puede exceder 200 caracteres';
+        break;
+      case 'descripcion':
+        if (value && value.length > 1000) error = 'La descripción no puede exceder 1000 caracteres';
+        break;
+      case 'servicios':
+        if (value && value.length > 500) error = 'Los servicios no pueden exceder 500 caracteres';
+        break;
+      case 'latitud':
+        if (value && (isNaN(value) || value < -90 || value > 90)) error = 'La latitud debe estar entre -90 y 90 grados';
+        break;
+      case 'longitud':
+        if (value && (isNaN(value) || value < -180 || value > 180)) error = 'La longitud debe estar entre -180 y 180 grados';
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
+
+  const validateAllFields = () => {
+    const errors = {};
+    Object.keys(formData).forEach(key => {
+      if (key !== 'imagen' && key !== 'removeImage') {
+        const error = validateField(key, formData[key]);
+        if (error) errors[key] = error;
+      }
+    });
+    return errors;
+  };
+
+  const handleGetLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setFormData(prev => ({
+            ...prev,
+            latitud: latitude.toString(),
+            longitud: longitude.toString(),
+          }));
+          setLocationError('');
+          setValidationErrors(prev => ({
+            ...prev,
+            latitud: '',
+            longitud: ''
+          }));
+        },
+        (error) => {
+          console.error('Error al obtener la ubicación:', error);
+          let errorMsg = 'No se pudo obtener la ubicación. ';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMsg += 'Permiso denegado por el usuario.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMsg += 'La ubicación no está disponible.';
+              break;
+            case error.TIMEOUT:
+              errorMsg += 'Se agotó el tiempo para obtener la ubicación.';
+              break;
+            default:
+              errorMsg += 'Ocurrió un error desconocido.';
+              break;
+          }
+          setLocationError(errorMsg);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    } else {
+      setLocationError('La geolocalización no es compatible con este navegador.');
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    if (name === 'telefono') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length <= 10) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: numericValue,
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+    const error = validateField(name, name === 'telefono' ? value.replace(/\D/g, '') : value);
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setErrorMessage('Solo se permiten archivos de imagen (JPG, PNG, GIF, WebP)');
+        return;
+      }
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setErrorMessage('La imagen no puede exceder 5MB');
+        return;
+      }
       setFormData({
         ...formData,
         imagen: file,
-        removeImage: false, // Resetear la opción de eliminar al subir una nueva imagen
+        removeImage: false,
       });
       setImagePreview(URL.createObjectURL(file));
+      setErrorMessage('');
     }
   };
 
@@ -97,15 +260,21 @@ const Hoteles = () => {
     setFormData({
       ...formData,
       removeImage: e.target.checked,
-      imagen: null, // Resetear la imagen si se marca eliminar
+      imagen: null,
     });
     if (e.target.checked) {
-      setImagePreview(null); // Limpiar la vista previa
+      setImagePreview(null);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const errors = validateAllFields();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setErrorMessage('Por favor corrija los errores en el formulario');
+      return;
+    }
     const formDataToSend = new FormData();
     formDataToSend.append('nombrehotel', formData.nombrehotel);
     formDataToSend.append('direccion', formData.direccion);
@@ -118,14 +287,16 @@ const Hoteles = () => {
     if (formData.imagen instanceof File) {
       formDataToSend.append('imagen', formData.imagen);
     }
+    if (formData.latitud) formDataToSend.append('latitud', formData.latitud);
+    if (formData.longitud) formDataToSend.append('longitud', formData.longitud);
 
     try {
       if (editingId) {
-        await axios.put(`https://backendd-q0zc.onrender.com/api/hoteles/${editingId}`, formDataToSend, {
+        await axios.put(`${API_BASE_URL}/api/hoteles/${editingId}`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       } else {
-        await axios.post('https://backendd-q0zc.onrender.com/api/hoteles', formDataToSend, {
+        await axios.post(`${API_BASE_URL}/api/hoteles`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       }
@@ -141,7 +312,7 @@ const Hoteles = () => {
   const handleDelete = async (id) => {
     if (window.confirm('¿Está seguro de que desea eliminar este hotel?')) {
       try {
-        await axios.delete(`https://backendd-q0zc.onrender.com/api/hoteles/${id}`);
+        await axios.delete(`${API_BASE_URL}/api/hoteles/${id}`);
         fetchHoteles();
         setErrorMessage('');
       } catch (error) {
@@ -162,10 +333,14 @@ const Hoteles = () => {
       servicios: hotel.servicios || '',
       imagen: null,
       removeImage: false,
+      latitud: hotel.latitud?.toString() || '',
+      longitud: hotel.longitud?.toString() || '',
     });
     setImagePreview(hotel.imagen && hotel.imagen.data ? `data:${hotel.imagen.mimeType};base64,${hotel.imagen.data}` : null);
     setEditingId(hotel.id_hotel);
     setOpenModal(true);
+    setValidationErrors({});
+    setTouched({});
   };
 
   const resetForm = () => {
@@ -179,10 +354,16 @@ const Hoteles = () => {
       servicios: '',
       imagen: null,
       removeImage: false,
+      latitud: '',
+      longitud: '',
     });
     setImagePreview(null);
     setEditingId(null);
     setOpenModal(false);
+    setLocationError('');
+    setValidationErrors({});
+    setTouched({});
+    setErrorMessage('');
   };
 
   return (
@@ -252,13 +433,19 @@ const Hoteles = () => {
           </Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2.5 }}>
             {[
-              { label: 'Nombre del Hotel', name: 'nombrehotel', type: 'text' },
-              { label: 'Dirección', name: 'direccion', type: 'text' },
-              { label: 'Teléfono', name: 'telefono', type: 'text' },
-              { label: 'Correo', name: 'correo', type: 'email' },
-              { label: 'Número de Habitaciones', name: 'numhabitacion', type: 'number', inputProps: { min: 0 } },
-              { label: 'Servicios', name: 'servicios', type: 'text' },
-            ].map(({ label, name, type, inputProps }) => (
+              { label: 'Nombre del Hotel', name: 'nombrehotel', type: 'text', required: true },
+              { label: 'Dirección', name: 'direccion', type: 'text', required: false },
+              {
+                label: 'Teléfono',
+                name: 'telefono',
+                type: 'text',
+                required: false,
+                placeholder: '1234567890',
+              },
+              { label: 'Correo', name: 'correo', type: 'email', required: true },
+              { label: 'Número de Habitaciones', name: 'numhabitacion', type: 'number', required: true, inputProps: { min: 1, max: 10000 } },
+              { label: 'Servicios', name: 'servicios', type: 'text', required: false },
+            ].map(({ label, name, type, required, inputProps, placeholder }) => (
               <TextField
                 key={name}
                 label={label}
@@ -266,10 +453,14 @@ const Hoteles = () => {
                 type={type}
                 value={formData[name]}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 variant="outlined"
                 fullWidth
-                required={['nombrehotel', 'correo', 'numhabitacion'].includes(name)}
+                required={required}
                 inputProps={inputProps}
+                placeholder={placeholder}
+                error={touched[name] && !!validationErrors[name]}
+                helperText={touched[name] && validationErrors[name]}
                 sx={{
                   mb: 2,
                   '& .MuiOutlinedInput-root': {
@@ -282,6 +473,9 @@ const Hoteles = () => {
                       borderColor: '#1976d2',
                       boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
                     },
+                    '&.Mui-error fieldset': {
+                      borderColor: '#d32f2f',
+                    },
                   },
                   '& .MuiInputLabel-root': {
                     color: '#555',
@@ -290,18 +484,133 @@ const Hoteles = () => {
                   '& .MuiInputLabel-root.Mui-focused': {
                     color: '#1976d2',
                   },
+                  '& .MuiInputLabel-root.Mui-error': {
+                    color: '#d32f2f',
+                  },
+                  '& .MuiFormHelperText-root.Mui-error': {
+                    color: '#d32f2f',
+                  },
                 }}
               />
             ))}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <TextField
+                label="Latitud"
+                name="latitud"
+                type="text"
+                value={formData.latitud}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                variant="outlined"
+                fullWidth
+                placeholder="-90.0 a 90.0"
+                error={touched.latitud && !!validationErrors.latitud}
+                helperText={touched.latitud && validationErrors.latitud}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    backgroundColor: '#f5f5f5',
+                    '&:hover fieldset': {
+                      borderColor: '#1976d2',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#1976d2',
+                      boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
+                    },
+                    '&.Mui-error fieldset': {
+                      borderColor: '#d32f2f',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#555',
+                    fontWeight: '500',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2',
+                  },
+                  '& .MuiInputLabel-root.Mui-error': {
+                    color: '#d32f2f',
+                  },
+                }}
+              />
+              <IconButton
+                color="primary"
+                onClick={handleGetLocation}
+                title="Obtener mi ubicación"
+                sx={{
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                  },
+                }}
+              >
+                <MyLocationIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <TextField
+                label="Longitud"
+                name="longitud"
+                type="text"
+                value={formData.longitud}
+                onChange={handleInputChange}
+                onBlur={handleBlur}
+                variant="outlined"
+                fullWidth
+                placeholder="-180.0 a 180.0"
+                error={touched.longitud && !!validationErrors.longitud}
+                helperText={touched.longitud && validationErrors.longitud}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    backgroundColor: '#f5f5f5',
+                    '&:hover fieldset': {
+                      borderColor: '#1976d2',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#1976d2',
+                      boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
+                    },
+                    '&.Mui-error fieldset': {
+                      borderColor: '#d32f2f',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#555',
+                    fontWeight: '500',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#1976d2',
+                  },
+                  '& .MuiInputLabel-root.Mui-error': {
+                    color: '#d32f2f',
+                  },
+                }}
+              />
+              <IconButton
+                color="primary"
+                onClick={handleGetLocation}
+                title="Obtener mi ubicación"
+                sx={{
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                  },
+                }}
+              >
+                <MyLocationIcon />
+              </IconButton>
+            </Box>
             <TextField
               label="Descripción"
               name="descripcion"
               value={formData.descripcion}
               onChange={handleInputChange}
+              onBlur={handleBlur}
               variant="outlined"
               fullWidth
               multiline
               rows={3}
+              error={touched.descripcion && !!validationErrors.descripcion}
+              helperText={touched.descripcion && validationErrors.descripcion}
               sx={{
                 mb: 2,
                 gridColumn: '1 / -1',
@@ -315,6 +624,9 @@ const Hoteles = () => {
                     borderColor: '#1976d2',
                     boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
                   },
+                  '&.Mui-error fieldset': {
+                    borderColor: '#d32f2f',
+                  },
                 },
                 '& .MuiInputLabel-root': {
                   color: '#555',
@@ -322,6 +634,9 @@ const Hoteles = () => {
                 },
                 '& .MuiInputLabel-root.Mui-focused': {
                   color: '#1976d2',
+                },
+                '& .MuiInputLabel-root.Mui-error': {
+                  color: '#d32f2f',
                 },
               }}
             />
@@ -341,6 +656,9 @@ const Hoteles = () => {
                   padding: '8px',
                 }}
               />
+              <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                Formatos permitidos: JPG, PNG, GIF, WebP. Tamaño máximo: 5MB
+              </Typography>
               {imagePreview && (
                 <Box sx={{ mt: 2 }}>
                   <img
@@ -371,6 +689,13 @@ const Hoteles = () => {
                 />
               )}
             </Box>
+            {locationError && (
+              <Box sx={{ gridColumn: '1 / -1', mb: 2 }}>
+                <Alert severity="warning" onClose={() => setLocationError('')}>
+                  {locationError}
+                </Alert>
+              </Box>
+            )}
             <Box sx={{ gridColumn: '1 / -1', display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button
                 type="submit"
@@ -413,6 +738,75 @@ const Hoteles = () => {
         </Box>
       </Modal>
 
+      <Modal open={openHabitacionesModal} onClose={() => setOpenHabitacionesModal(false)}>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: { xs: '90%', md: 600 },
+            bgcolor: 'background.paper',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+            p: 4,
+            borderRadius: 2,
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            border: '2px solid #e3f2fd',
+          }}
+        >
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{
+              color: '#1976d2',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              mb: 3,
+            }}
+          >
+            Habitaciones del Hotel
+          </Typography>
+          <Table sx={{ minWidth: 300 }} aria-label="habitaciones table">
+            <TableHead sx={{ backgroundColor: '#e3f2fd' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold', color: '#1976d2' }}>Cuarto</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#1976d2' }}>Estado</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#1976d2' }}>ID Hotel</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {habitaciones.map((habitacion) => (
+                <TableRow key={habitacion.id}>
+                  <TableCell sx={{ color: '#333' }}>{habitacion.cuarto}</TableCell>
+                  <TableCell sx={{ color: '#333' }}>{habitacion.estado}</TableCell>
+                  <TableCell sx={{ color: '#333' }}>{habitacion.id_hoteles}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Button
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(90deg, #ef5350, #f44336)',
+                borderRadius: '8px',
+                padding: '10px 24px',
+                fontWeight: 'bold',
+                '&:hover': {
+                  background: 'linear-gradient(90deg, #d32f2f, #ef5350)',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 4px 12px rgba(239, 83, 80, 0.3)',
+                },
+              }}
+              onClick={() => setOpenHabitacionesModal(false)}
+            >
+              Cerrar
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
       <Paper
         elevation={3}
         sx={{
@@ -424,7 +818,7 @@ const Hoteles = () => {
         <Table sx={{ minWidth: 650 }} aria-label="hoteles table">
           <TableHead sx={{ backgroundColor: '#e3f2fd' }}>
             <TableRow>
-              {['Nombre', 'Dirección', 'Teléfono', 'Correo', 'Habitaciones', 'Descripción', 'Servicios', 'Imagen', 'Acciones'].map(
+              {['Nombre', 'Dirección', 'Habitaciones', 'Servicios', 'Latitud', 'Longitud', 'Imagen', 'Acciones'].map(
                 (head) => (
                   <TableCell
                     key={head}
@@ -452,11 +846,10 @@ const Hoteles = () => {
               >
                 <TableCell sx={{ color: '#333' }}>{hotel.nombrehotel}</TableCell>
                 <TableCell sx={{ color: '#333' }}>{hotel.direccion || 'Sin dirección'}</TableCell>
-                <TableCell sx={{ color: '#333' }}>{hotel.telefono || 'Sin teléfono'}</TableCell>
-                <TableCell sx={{ color: '#333' }}>{hotel.correo}</TableCell>
                 <TableCell sx={{ color: '#333' }}>{hotel.numhabitacion}</TableCell>
-                <TableCell sx={{ color: '#333' }}>{hotel.descripcion || 'Sin descripción'}</TableCell>
                 <TableCell sx={{ color: '#333' }}>{hotel.servicios || 'Sin servicios'}</TableCell>
+                <TableCell sx={{ color: '#333' }}>{hotel.latitud || 'N/A'}</TableCell>
+                <TableCell sx={{ color: '#333' }}>{hotel.longitud || 'N/A'}</TableCell>
                 <TableCell>
                   {hotel.imagen && hotel.imagen.data ? (
                     <img
@@ -499,6 +892,17 @@ const Hoteles = () => {
                     }}
                   >
                     <DeleteIcon />
+                  </IconButton>
+                  <IconButton
+                    color="info"
+                    onClick={() => fetchHabitaciones(hotel.id)}
+                    sx={{
+                      '&:hover': {
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                      },
+                    }}
+                  >
+                    <VisibilityIcon />
                   </IconButton>
                 </TableCell>
               </TableRow>

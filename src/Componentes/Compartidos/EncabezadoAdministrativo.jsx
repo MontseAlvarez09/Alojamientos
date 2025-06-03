@@ -70,6 +70,9 @@ const EncabezadoAdministrativo = () => {
       case "cuartos":
         navigate('/admin/cuartos');
         break;
+        case "tiposhabitaciones":
+        navigate('/admin/tiposhabitaciones');
+        break;
       case "Departamentos":
         navigate('/admin/departamentos');
         break;
@@ -284,6 +287,7 @@ const EncabezadoAdministrativo = () => {
               {openDropdown === 'altapropiedadess' && (
                 <ul className="dropdown-menu">
                   <li onClick={() => { handleClick('altapropiedades'); handleMenuClick('altapropiedades'); }}>Hotel</li>
+                  <li onClick={() => { handleClick('tiposhabitaciones'); handleMenuClick('tiposhabitaciones'); }}>Tipos de Habitacion</li>
                   <li onClick={() => { handleClick('cuartos'); handleMenuClick('cuartos'); }}>Habitaciones</li>
                 </ul>
               )}

@@ -9,7 +9,8 @@ const Terminos = () => {
     const [termino, setTermino] = useState({
         titulo: '',
         contenido: '',
-        id_empresa: ''
+        id_empresa: '',
+        estado: 'activo'
     });
     const [terminos, setTerminos] = useState([]);
     const [perfiles, setPerfiles] = useState([]);
@@ -45,12 +46,7 @@ const Terminos = () => {
                     [name]: value
                 });
             }
-        } else if (name === 'contenido') {
-            setTermino({
-                ...termino,
-                [name]: value
-            });
-        } else if (name === 'id_empresa') {
+        } else if (name === 'contenido' || name === 'id_empresa') {
             setTermino({
                 ...termino,
                 [name]: value
@@ -76,7 +72,7 @@ const Terminos = () => {
                 await axios.put(`https://backendd-q0zc.onrender.com/api/terminos/${editingId}`, termino);
                 MySwal.fire({
                     title: 'Éxito!',
-                    text: 'El término ha sido actualizado correctamente.',
+                    text: 'El término ha sido actualizado correctamente y ahora está activo.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
@@ -84,7 +80,7 @@ const Terminos = () => {
                 await axios.post(`https://backendd-q0zc.onrender.com/api/terminos`, termino);
                 MySwal.fire({
                     title: 'Éxito!',
-                    text: 'El término ha sido creado correctamente.',
+                    text: 'El término ha sido creado correctamente y ahora está activo.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
@@ -93,7 +89,8 @@ const Terminos = () => {
             setTermino({
                 titulo: '',
                 contenido: '',
-                id_empresa: perfiles.length > 0 ? perfiles[0].id : ''
+                id_empresa: perfiles.length > 0 ? perfiles[0].id : '',
+                estado: 'activo'
             });
             setEditingId(null);
             const response = await axios.get('https://backendd-q0zc.onrender.com/api/terminos');
@@ -145,7 +142,8 @@ const Terminos = () => {
         setTermino({
             titulo: termino.titulo,
             contenido: termino.contenido,
-            id_empresa: termino.id_empresa
+            id_empresa: termino.id_empresa,
+            estado: 'activo' // Al editar, el término se establecerá como activo
         });
         setEditingId(termino.id);
     };
@@ -154,7 +152,8 @@ const Terminos = () => {
         setTermino({
             titulo: '',
             contenido: '',
-            id_empresa: perfiles.length > 0 ? perfiles[0].id : ''
+            id_empresa: perfiles.length > 0 ? perfiles[0].id : '',
+            estado: 'activo'
         });
         setEditingId(null);
     };
@@ -236,6 +235,7 @@ const Terminos = () => {
                             </ul>
                             <p><strong>Fecha:</strong> {new Date(termino.fechahora).toLocaleString()}</p>
                             <p><strong>Empresa:</strong> {termino.NombreEmpresa}</p>
+                            <p><strong>Estado:</strong> {termino.estado === 'activo' ? 'Activo' : 'Inactivo'}</p>
                             <div style={styles.buttonGroup}>
                                 <button
                                     style={styles.editButton}

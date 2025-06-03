@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
 import {
   Box,
   Button,
@@ -721,7 +722,7 @@ const PaginaPrincipal = () => {
                           type="date"
                           value={checkIn}
                           onChange={(e) => setCheckIn(e.target.value)}
-                          label="Check-in"
+                          label="Fecha Inicial"
                           InputLabelProps={{ shrink: true }}
                           InputProps={{
                             startAdornment: (
@@ -739,7 +740,7 @@ const PaginaPrincipal = () => {
                           type="date"
                           value={checkOut}
                           onChange={(e) => setCheckOut(e.target.value)}
-                          label="Check-out"
+                          label="Fecha de Termino"
                           InputLabelProps={{ shrink: true }}
                           InputProps={{
                             startAdornment: (
@@ -780,7 +781,8 @@ const PaginaPrincipal = () => {
                           sx={{
                             py: 1.8,
                             fontWeight: 600,
-                            boxShadow: "0 10px 15px -3px rgba(255, 138, 101, 0.3)",
+                           boxShadow: "0 10px 15px -3px rgba(84, 156, 148, 0.3)",
+                            color: 'white',
                           }}
                         >
                           Buscar
@@ -793,509 +795,855 @@ const PaginaPrincipal = () => {
             </Fade>
           </Container>
         </Box>
-        {/* Destinos Destacados - Usando datos de la base de datos */}
-        {hoteles.length > 0 && (
-          <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: "primary.dark" }}>
-                Destinos Destacados
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <IconButton
-                  onClick={prevSlide}
-                  sx={{
-                    bgcolor: "background.paper",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    "&:hover": { bgcolor: "background.paper", transform: "scale(1.05)" }
-                  }}
-                >
-                  <KeyboardArrowLeft />
-                </IconButton>
-                <IconButton
-                  onClick={nextSlide}
-                  sx={{
-                    bgcolor: "background.paper",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                    "&:hover": { bgcolor: "background.paper", transform: "scale(1.05)" }
-                  }}
-                >
-                  <KeyboardArrowRight />
-                </IconButton>
-              </Box>
-            </Box>
 
-            <Box sx={{ position: "relative", overflow: "hidden", borderRadius: 4, height: 300 }}>
-              {hoteles.map((hotel, index) => (
-                <Box
-                  key={hotel.id_hotel}
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    opacity: index === currentSlide ? 1 : 0,
-                    transition: "opacity 0.5s ease-in-out",
-                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5)), url(${getImageSrc(hotel.imagen)})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexDirection: "column",
-                    color: "white",
-                    borderRadius: 4,
-                    boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)",
-                  }}
-                >
-                  <Typography variant="h3" sx={{ fontWeight: 700, mb: 2, textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>
-                    {hotel.nombrehotel}
-                  </Typography>
-                  <Typography variant="h6" sx={{ mb: 3, textShadow: "0 2px 4px rgba(0,0,0,0.5)", opacity: 0.9 }}>
-                    {hotel.direccion}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    sx={{
-                      px: 4,
-                      py: 1.2,
-                      fontWeight: 600,
-                      boxShadow: "0 4px 14px rgba(0,0,0,0.3)",
-                      borderRadius: 8,
-                    }}
-                    onClick={() => handleOpenModal(hotel)}
-                  >
-                    Ver Detalles
-                  </Button>
-                </Box>
-              ))}
-            </Box>
-          </Container>
-        )}
 
-        {/* Sección de Hoteles Destacados */}
-        <Container maxWidth="lg" sx={{ py: 8 }}>
-          <Box sx={{ textAlign: "center", mb: 6 }}>
-            <Chip
-              label="ALOJAMIENTOS PREMIUM"
-              color="primary"
-              size="small"
-              sx={{ mb: 2, fontWeight: 600, px: 1 }}
-            />
-            <Typography variant="h3" sx={{ mb: 2, color: "primary.dark", fontWeight: 700 }}>
-              Hoteles Destacados
-            </Typography>
-            <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 400, maxWidth: 700, mx: "auto" }}>
-              Descubre los mejores hoteles seleccionados especialmente para ti
-            </Typography>
-          </Box>
 
-          <Grid container spacing={3}>
-            {loading
-              ? Array.from({ length: 6 }).map((_, index) => (
-                <Grid item xs={12} sm={6} lg={4} key={index}>
-                  <Card sx={{ maxWidth: 350, mx: "auto" }}>
-                    <Skeleton variant="rectangular" height={180} />
-                    <CardContent>
-                      <Skeleton variant="text" height={28} />
-                      <Skeleton variant="text" height={20} />
-                      <Skeleton variant="text" height={20} width="60%" />
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))
-              : hoteles.map((hotel) => (
-                <Grid item xs={12} sm={6} lg={4} key={hotel.id_hotel}>
-                  <Card sx={{ maxWidth: 350, mx: "auto", height: "100%" }}>
-                    <Box sx={{ position: "relative" }}>
-                      <CardMedia
-                        component="img"
-                        height={180}
-                        image={getImageSrc(hotel.imagen)}
-                        alt={hotel.nombrehotel}
-                        sx={{
-                          transition: "transform 0.5s",
-                          "&:hover": { transform: "scale(1.05)" }
-                        }}
-                      />
-                      <IconButton
-                        sx={{
-                          position: "absolute",
-                          top: 8,
-                          right: 8,
-                          backgroundColor: "rgba(255, 255, 255, 0.9)",
-                          "&:hover": { backgroundColor: "white", transform: "scale(1.1)" },
-                          transition: "transform 0.2s",
-                          zIndex: 2,
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(hotel.id_hotel, "hotel");
-                        }}
-                      >
-                        {favorites.has(`hotel-${hotel.id_hotel}`) ?
-                          <Favorite color="error" /> :
-                          <FavoriteBorder />
-                        }
-                      </IconButton>
-                      <Chip
-                        label="Hotel"
-                        color="primary"
-                        size="small"
-                        sx={{
-                          position: "absolute",
-                          top: 8,
-                          left: 8,
-                          fontWeight: 600,
-                          zIndex: 2,
-                        }}
-                      />
-                    </Box>
-                    <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
-                      <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, fontSize: "1.1rem" }}>
-                        {hotel.nombrehotel}
-                      </Typography>
-
-                      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                        <LocationOn sx={{ fontSize: 16, color: "text.secondary", mr: 0.5 }} />
-                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.85rem" }}>
-                          {hotel.direccion || "Ubicación no especificada"}
-                        </Typography>
-                      </Box>
-
-                      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                        <Rating
-                          value={0}
-                          precision={0.5}
-                          size="small"
-                          onChange={(event, newValue) => {
-                            console.log('Nueva calificación para hotel:', hotel.id_hotel, newValue);
-                          }}
-                        />
-                        <Typography variant="body2" sx={{ ml: 1, color: "text.secondary", fontSize: "0.75rem" }}>
-                          Califica este hotel
-                        </Typography>
-                      </Box>
-
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          mb: 2,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          height: "36px",
-                          fontSize: "0.85rem"
-                        }}
-                      >
-                        {hotel.descripcion || "Hotel con excelentes servicios y comodidades"}
-                      </Typography>
-
-                      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                        <Bed sx={{ fontSize: 16, color: "text.secondary", mr: 0.5 }} />
-                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.85rem" }}>
-                          {hotel.numhabitacion} habitaciones disponibles
-                        </Typography>
-                      </Box>
-
-                      {hotel.servicios && (
-                        <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-                          {getServiceIcons(hotel.servicios).map((icon, index) => (
-                            <Tooltip
-                              key={index}
-                              title={
-                                index === 0 ? "WiFi" :
-                                  index === 1 ? "Estacionamiento" :
-                                    index === 2 ? "Restaurante" : ""
-                              }
-                            >
-                              <Box sx={{
-                                color: "primary.main",
-                                bgcolor: "rgba(0, 121, 107, 0.1)",
-                                p: 0.5,
-                                borderRadius: 1,
-                                fontSize: "0.9rem"
-                              }}>
-                                {icon}
-                              </Box>
-                            </Tooltip>
-                          ))}
-                        </Box>
-                      )}
-
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        size="small"
-                        sx={{
-                          mt: "auto",
-                          py: 1
-                        }}
-                        onClick={() => handleOpenModal(hotel)}
-                      >
-                        Ver Detalles
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-          </Grid>
-        </Container>
-
-        {/* Sección de Departamentos/Cuartos */}
-        {/* Sección de Departamentos/Cuartos */}
-        <Box sx={{ backgroundColor: "rgba(0, 121, 107, 0.03)", py: 8, borderRadius: { md: "50px 50px 0 0" } }}>
-          <Container maxWidth="lg">
-            <Box sx={{ textAlign: "center", mb: 6 }}>
-              <Chip
-                label="ESPACIOS ÚNICOS"
-                color="secondary"
-                size="small"
-                sx={{ mb: 2, fontWeight: 600, px: 1 }}
-              />
-              <Typography variant="h3" sx={{ mb: 2, color: "primary.dark", fontWeight: 700 }}>
-                Departamentos y Habitaciones
-              </Typography>
-              <Typography variant="h6" sx={{ color: "text.secondary", fontWeight: 400, maxWidth: 700, mx: "auto" }}>
-                Espacios únicos y cómodos para tu estadía perfecta
-              </Typography>
-            </Box>
-
-            <Tabs
-              value={activeTab}
-              onChange={(e, v) => setActiveTab(v)}
-              centered
-              sx={{
-                mb: 4,
-                "& .MuiTabs-indicator": {
-                  backgroundColor: "secondary.main",
-                  height: 3,
-                  borderRadius: "3px 3px 0 0",
-                },
-                "& .MuiTab-root": {
-                  fontWeight: 600,
-                  fontSize: "1rem",
-                  textTransform: "none",
-                  minWidth: 120,
-                },
-              }}
-            >
-              <Tab label="Todos" />
-              <Tab label="Disponibles" />
-              <Tab label="Más Valorados" />
-            </Tabs>
-
-            <Grid container spacing={3}>
-              {loading
-                ? Array.from({ length: 8 }).map((_, index) => (
-                  <Grid item xs={12} sm={6} lg={4} key={index}>
-                    <Card sx={{ maxWidth: 350, mx: "auto" }}>
-                      <Skeleton variant="rectangular" height={180} />
-                      <CardContent>
-                        <Skeleton variant="text" height={28} />
-                        <Skeleton variant="text" height={20} />
-                        <Skeleton variant="text" height={20} width="60%" />
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))
-                : cuartos.map((cuarto) => (
-                  <Grid item xs={12} sm={6} lg={4} key={cuarto.id}>
-                    <Card sx={{ maxWidth: 350, mx: "auto", height: "100%" }}>
-                      <Box sx={{ position: "relative" }}>
-                        <CardMedia
-                          component="img"
-                          height={180}
-                          image={getCuartoImages(cuarto.imagenes)}
-                          alt={cuarto.cuarto}
-                          sx={{
-                            transition: "transform 0.5s",
-                            "&:hover": { transform: "scale(1.05)" }
-                          }}
-                        />
-                        <IconButton
-                          sx={{
-                            position: "absolute",
-                            top: 8,
-                            right: 8,
-                            backgroundColor: "rgba(255, 255, 255, 0.9)",
-                            "&:hover": { backgroundColor: "white", transform: "scale(1.1)" },
-                            transition: "transform 0.2s",
-                            zIndex: 2,
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(cuarto.id, "cuarto");
-                          }}
-                        >
-                          {favorites.has(`cuarto-${cuarto.id}`) ?
-                            <Favorite color="error" /> :
-                            <FavoriteBorder />
-                          }
-                        </IconButton>
-                        <Chip
-                          label={cuarto.estado === "Disponible" ? "Disponible" : "No Disponible"}
-                          color={cuarto.estado === "Disponible" ? "success" : "error"}
-                          size="small"
-                          sx={{
-                            position: "absolute",
-                            top: 8,
-                            left: 8,
-                            fontWeight: 600,
-                            zIndex: 2,
-                          }}
-                        />
-                        {cuarto.estado === "Disponible" && (
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              bottom: 8,
-                              right: 8,
-                              bgcolor: "rgba(255, 255, 255, 0.9)",
-                              borderRadius: 1,
-                              px: 1,
-                              py: 0.5,
-                              display: "flex",
-                              alignItems: "center",
-                              zIndex: 2,
-                            }}
-                          >
-                            <CheckCircle sx={{ fontSize: 14, color: "success.main", mr: 0.5 }} />
-                            <Typography variant="caption" fontWeight="bold" color="success.main" sx={{ fontSize: "0.7rem" }}>
-                              Verificado
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-                      <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
-                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, fontSize: "1.1rem" }}>
-                          {cuarto.cuarto}
-                        </Typography>
-
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                          <LocationOn sx={{ fontSize: 16, color: "text.secondary", mr: 0.5 }} />
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.85rem" }}>
-                            {cuarto.direccion || "Ubicación no especificada"}
-                          </Typography>
-                        </Box>
-
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                          <Rating
-                            value={0}
-                            precision={0.5}
-                            size="small"
-                            onChange={(event, newValue) => {
-                              console.log('Nueva calificación para cuarto:', cuarto.id, newValue);
-                            }}
-                          />
-                          <Typography variant="body2" sx={{ ml: 1, color: "text.secondary", fontSize: "0.75rem" }}>
-                            Califica este hotel
-                          </Typography>
-                        </Box>
-
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            mb: 2,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            height: "36px",
-                            fontSize: "0.85rem"
-                          }}
-                        >
-                          {cuarto.descripcion || "Espacio cómodo y moderno para tu estancia"}
-                        </Typography>
-
-                        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                          <Bed sx={{ fontSize: 16, color: "text.secondary", mr: 0.5 }} />
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.85rem" }}>
-                            {cuarto.numhabitacion || "1"} habitación disponible
-                          </Typography>
-                        </Box>
-
-                        {cuarto.servicios && (
-                          <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-                            {getServiceIcons(cuarto.servicios).map((icon, index) => (
-                              <Tooltip
-                                key={index}
-                                title={
-                                  index === 0 ? "WiFi" :
-                                    index === 1 ? "Estacionamiento" :
-                                      index === 2 ? "Restaurante" : ""
-                                }
-                              >
-                                <Box sx={{
-                                  color: "primary.main",
-                                  bgcolor: "rgba(0, 121, 107, 0.1)",
-                                  p: 0.5,
-                                  borderRadius: 1,
-                                  fontSize: "0.9rem"
-                                }}>
-                                  {icon}
-                                </Box>
-                              </Tooltip>
-                            ))}
-                          </Box>
-                        )}
-
-                        <Typography
-                          variant="body1"
-                          sx={{
-                            fontWeight: 700,
-                            color: "primary.main",
-                            mb: 1,
-                            fontSize: "1.1rem",
-                          }}
-                        >
-                          ${cuarto.preciodia || "100"}
-                          <Typography
-                            component="span"
-                            sx={{
-                              fontWeight: 400,
-                              color: "text.secondary",
-                              fontSize: "0.8rem",
-                              ml: 0.5,
-                            }}
-                          >
-                            /día
-                          </Typography>
-                        </Typography>
-
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: "0.75rem" }}>
-                          Horario: {cuarto.horario || "2025-05-23T09:00:00Z - 2025-05-23T18:00:00Z"}
-                        </Typography>
-
-                        <Button
-                          variant="contained"
-                          fullWidth
-                          size="small"
-                          sx={{
-                            mt: "auto",
-                            py: 1
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCardClick(cuarto.id);
-                          }}
-                        >
-                          Ver Más
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-            </Grid>
-          </Container>
+{/* Destinos Destacados - Usando datos de la base de datos */}
+{hoteles.length > 0 && (
+  <Box sx={{ 
+    background: "linear-gradient(135deg, rgba(11, 117, 131, 0.05) 0%, rgba(76, 148, 188, 0.05) 100%)",
+    py: 6,
+    position: "relative",
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: "radial-gradient(circle at 30% 20%, rgba(179, 201, 202, 0.1) 0%, transparent 50%)",
+      pointerEvents: "none"
+    }
+  }}>
+    <Container maxWidth="lg" sx={{ py: 4, position: "relative", zIndex: 1 }}>
+      <Box sx={{ mb: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box>
+          <Chip   
+            label="EXPERIENCIAS ÚNICAS"  
+            sx={{ 
+              mb: 2, 
+              fontWeight: 600, 
+              px: 2,
+              py: 1,
+              backgroundColor: "#549c94",
+              color: "white",
+              fontSize: "0.8rem",
+              letterSpacing: "0.5px",
+              boxShadow: "0 4px 12px rgba(84, 156, 148, 0.3)"
+            }}
+          />
+          <Typography variant="h4" sx={{ 
+            fontWeight: 700, 
+            color: "#0b7583",
+            textShadow: "0 2px 4px rgba(11, 117, 131, 0.1)",
+            mb: 1
+          }}>
+            Destinos Destacados
+          </Typography>
+          <Typography variant="body1" sx={{ 
+            color: "#549c94",
+            maxWidth: 400
+          }}>
+            Descubre los lugares más increíbles para tu próxima aventura
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <IconButton
+            onClick={prevSlide}
+            sx={{
+              bgcolor: "rgba(255, 255, 255, 0.9)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(179, 201, 202, 0.3)",
+              boxShadow: "0 8px 24px rgba(11, 117, 131, 0.15)",
+              color: "#0b7583",
+              width: 48,
+              height: 48,
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              "&:hover": { 
+                bgcolor: "#4c94bc", 
+                transform: "translateY(-2px) scale(1.05)",
+                boxShadow: "0 12px 32px rgba(76, 148, 188, 0.25)",
+                color: "blacK"
+              }
+            }}
+          >
+            <KeyboardArrowLeft sx={{ fontSize: 24 }} />
+          </IconButton>
+          <IconButton
+            onClick={nextSlide}
+            sx={{
+              bgcolor: "rgba(255, 255, 255, 0.9)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(179, 201, 202, 0.3)",
+              boxShadow: "0 8px 24px rgba(11, 117, 131, 0.15)",
+              color: "#0b7583",
+              width: 48,
+              height: 48,
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              "&:hover": { 
+                bgcolor: "#4c94bc", 
+                transform: "translateY(-2px) scale(1.05)",
+                boxShadow: "0 12px 32px rgba(76, 148, 188, 0.25)",
+                color: "white"
+              }
+            }}
+          >
+            <KeyboardArrowRight sx={{ fontSize: 24 }} />
+          </IconButton>
         </Box>
       </Box>
+      
+      <Box sx={{ 
+        position: "relative", 
+        overflow: "hidden", 
+        borderRadius: "24px", 
+        height: 400,
+        boxShadow: "0 20px 60px rgba(11, 117, 131, 0.2)",
+        border: "1px solid rgba(179, 201, 202, 0.2)"
+      }}>
+        {hoteles.map((hotel, index) => (
+          <Box
+            key={hotel.id_hotel}
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              opacity: index === currentSlide ? 1 : 0,
+              transform: index === currentSlide ? "scale(1)" : "scale(1.02)",
+              transition: "all 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+              backgroundImage: `linear-gradient(135deg, rgba(11, 117, 131, 0.4) 0%, rgba(76, 148, 188, 0.5) 50%, rgba(0, 0, 0, 0.3) 100%), url(${getImageSrc(hotel.imagen)})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              color: "white",
+              borderRadius: "24px",
+              zIndex: index === currentSlide ? 2 : 1,
+              visibility: index === currentSlide ? "visible" : "hidden"
+            }}
+          >
+            <Box sx={{ 
+              position: "relative", 
+              zIndex: 3, 
+              textAlign: "center",
+              maxWidth: 600,
+              px: 4
+            }}>
+              <Typography variant="h2" sx={{ 
+                fontWeight: 800, 
+                mb: 2, 
+                textShadow: "0 4px 16px rgba(0,0,0,0.7)",
+                color: "white",
+                fontSize: { xs: "2rem", md: "3rem" }
+              }}>
+                {hotel.nombrehotel}
+              </Typography>
+              
+              <Box sx={{ 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                mb: 4,
+                backgroundColor: "rgba(255, 255, 255, 0.15)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "20px",
+                px: 3,
+                py: 1.5,
+                border: "1px solid rgba(255, 255, 255, 0.2)"
+              }}>
+                <LocationOn sx={{ fontSize: 20, mr: 1, color: "#f3a384" }} />
+                <Typography variant="h6" sx={{ 
+                  textShadow: "0 2px 8px rgba(0,0,0,0.7)", 
+                  fontWeight: 500,
+                  letterSpacing: "0.5px",
+                  color: "white"
+                }}>
+                  {hotel.direccion}
+                </Typography>
+              </Box>
+              
+            <Button  
+                disableElevation="outlined"
+                sx={{
+                 px: 6,
+                 py: 2,
+                 fontWeight: 700,
+                 fontSize: "1.1rem",
+                 backgroundColor: "#549c94",
+                 color: "white", 
+                 boxShadow: "0 8px 32px rgba(236, 230, 230, 0.4)",
+                 borderRadius: "50px",
+                 textTransform: "none",
+                 border: "2px solid rgba(238, 228, 228, 0.2)",
+                 backdropFilter: "blur(10px)",
+                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                 "&:hover": {
+                 backgroundColor: "#4a8a82",
+                 transform: "translateY(-4px) scale(1.05)",
+                 boxShadow: "0 16px 48px rgba(239, 247, 246, 0.6)",
+                }
+                }}
+                onClick={() => handleOpenModal(hotel)}
+              >
+                Explorar Destino
+              </Button>
+            </Box>
+            
+            {/* Elementos decorativos */}
+            <Box sx={{
+              position: "absolute",
+              top: 20,
+              right: 20,
+              width: 60,
+              height: 60,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, rgb(248, 241, 241) 0%, hsl(160, 15.80%, 96.30%) 100%)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(253, 247, 247, 0.99)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 2
+            }}>
+              <Typography sx={{ 
+                color: "black", 
+                fontWeight: 700,
+                fontSize: "0.8rem"
+              }}>
+                {index + 1}/{hoteles.length}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+        
+        {/* Indicadores de posición */}
+        <Box sx={{
+          position: "absolute",
+          bottom: 24,
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          gap: 1,
+          zIndex: 10
+        }}>
+          {hoteles.map((_, index) => (
+            <Box
+              key={index}
+              sx={{
+                width: index === currentSlide ? 32 : 12,
+                height: 4,
+                borderRadius: "4px",
+                backgroundColor: index === currentSlide ? "#f3a384" : "rgba(255, 255, 255, 0.5)",
+                transition: "all 0.3s ease",
+                cursor: "pointer",
+                boxShadow: index === currentSlide ? "0 2px 8px rgba(243, 163, 132, 0.5)" : "none"
+              }}
+              onClick={() => setCurrentSlide(index)}
+            />
+          ))}
+        </Box>
+      </Box>
+    </Container>
+  </Box>
+)}
+
+
+
+      {/* Sección de Hoteles Destacados */}
+<Container maxWidth="xl" sx={{ py: 8 }}>
+  <Box sx={{ textAlign: "center", mb: 6 }}>
+    <Chip
+      label="ALOJAMIENTOS PREMIUM"
+      sx={{ 
+        mb: 2, 
+        fontWeight: 600, 
+        px: 1,
+        backgroundColor: "#4c94bc",
+        color: "white",
+        fontSize: "0.75rem"
+      }}
+      size="small"
+    />
+    <Typography variant="h3" sx={{ mb: 2, color: "#0b7583", fontWeight: 700 }}>
+      Hoteles Destacados
+    </Typography>
+    <Typography variant="h6" sx={{ color: "#549c94", fontWeight: 400, maxWidth: 700, mx: "auto" }}>
+      Descubre los mejores hoteles seleccionados especialmente para ti
+    </Typography>
+  </Box>
+
+  <Grid container spacing={2} sx={{ justifyContent: "center" }}>
+    {loading
+      ? Array.from({ length: 8 }).map((_, index) => (
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3} key={index}>
+          <Card sx={{ width: "100%", maxWidth: 320 }}>
+            <Skeleton variant="rectangular" height={180} />
+            <CardContent>
+              <Skeleton variant="text" height={28} />
+              <Skeleton variant="text" height={20} />
+              <Skeleton variant="text" height={20} width="60%" />
+            </CardContent>
+          </Card>
+        </Grid>
+      ))
+      : hoteles.map((hotel) => (
+        <Grid item xs={12} sm={6} md={3} lg={3} xl={3} key={hotel.id_hotel}>
+          <Card sx={{ 
+            width: "100%", 
+            maxWidth: 320, 
+            height: "100%",
+            border: "1px solid #b3c9ca",
+            boxShadow: "0 2px 8px rgba(75, 148, 188, 0.1)"
+          }}>
+            <Box sx={{ position: "relative" }}>
+              <CardMedia
+                component="img"
+                height={180}
+                image={getImageSrc(hotel.imagen)}
+                alt={hotel.nombrehotel}
+                sx={{
+                  transition: "transform 0.5s",
+                  "&:hover": { transform: "scale(1.05)" }
+                }}
+              />
+              <IconButton
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  backgroundColor: "#549c94(255, 255, 255, 0.9)",
+                  "&:hover": { 
+                    backgroundColor: "#f3a384", 
+                    transform: "scale(1.1)",
+                    color: "white"
+                  },
+                  transition: "all 0.2s",
+                  zIndex: 2,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(hotel.id_hotel, "hotel");
+                }}
+              >
+                {favorites.has(`hotel-${hotel.id_hotel}`) ?
+                  <Favorite sx={{ color: "#f3a384" }} /> :
+                  <FavoriteBorder />
+                }
+              </IconButton>
+              <Chip
+                label="Hotel"
+                size="small"
+                sx={{
+                  position: "absolute",
+                  top: 8,
+                  left: 8,
+                  fontWeight: 600,
+                  zIndex: 2,
+                  backgroundColor: "#0b7583",
+                  color: "white"
+                }}
+              />
+            </Box>
+            <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+              <Typography variant="h6" sx={{ 
+                mb: 1, 
+                fontWeight: 600, 
+                fontSize: "1.1rem",
+                color: "#0b7583"
+              }}>
+                {hotel.nombrehotel}
+              </Typography>
+
+              <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                <LocationOn sx={{ fontSize: 16, color: "#549c94", mr: 0.5 }} />
+                <Typography variant="body2" sx={{ 
+                  fontSize: "0.85rem",
+                  color: "#549c94"
+                }}>
+                  {hotel.direccion || "Ubicación no especificada"}
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Rating
+                  value={0}
+                  precision={0.5}
+                  size="small"
+                  sx={{
+                    color: "#f3a384",
+                    "& .MuiRating-iconEmpty": {
+                      color: "#b3c9ca"
+                    }
+                  }}
+                  onChange={(event, newValue) => {
+                    console.log('Nueva calificación para hotel:', hotel.id_hotel, newValue);
+                  }}
+                />
+                <Typography variant="body2" sx={{ 
+                  ml: 1, 
+                  color: "#549c94", 
+                  fontSize: "0.75rem" 
+                }}>
+                  Califica este hotel
+                </Typography>
+              </Box>
+
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 2,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  height: "36px",
+                  fontSize: "0.85rem",
+                  color: "#549c94"
+                }}
+              >
+                {hotel.descripcion || "Hotel con excelentes servicios y comodidades"}
+              </Typography>
+
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Bed sx={{ fontSize: 16, color: "#549c94", mr: 0.5 }} />
+                <Typography variant="body2" sx={{ 
+                  fontSize: "0.85rem",
+                  color: "#549c94"
+                }}>
+                  {hotel.numhabitacion} habitaciones disponibles
+                </Typography>
+              </Box>
+
+              {hotel.servicios && (
+                <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                  {getServiceIcons(hotel.servicios).map((icon, index) => (
+                    <Tooltip
+                      key={index}
+                      title={
+                        index === 0 ? "WiFi" :
+                          index === 1 ? "Estacionamiento" :
+                            index === 2 ? "Restaurante" : ""
+                      }
+                    >
+                      <Box sx={{
+                        color: "#0b7583",
+                        bgcolor: "rgba(75, 148, 188, 0.1)",
+                        p: 0.5,
+                        borderRadius: 1,
+                        fontSize: "0.9rem"
+                      }}>
+                        {icon}
+                      </Box>
+                    </Tooltip>
+                  ))}
+                </Box>
+              )}
+
+              <Button
+                variant="outlined"
+                fullWidth
+                size="small"
+                sx={{
+                  mt: "auto",
+                  py: 1,
+                  backgroundColor: "#b3c9ca",
+                  color: "#549c94", 
+                  borderColor: "transparent", 
+                  "&:hover": {
+                    backgroundColor: "white",
+                    color: "#b3c9ca", 
+                  }
+                }}
+                onClick={() => handleOpenModal(hotel)}
+              >
+                Ver Detalles
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+  </Grid>
+</Container>
+
+        {/* Sección de Departamentos/Cuartos */}
+        <Box sx={{ 
+        background: "linear-gradient(135deg, #b3c9ca 0%, rgba(179, 201, 202, 0.1) 100%)",
+        py: 8, 
+        borderRadius: { md: "50px 50px 0 0" } 
+      }}>
+      <Container maxWidth="xl"> {/* Cambié de 'lg' a 'xl' para más espacio */}
+        <Box sx={{ textAlign: "center", mb: 6 }}>
+          <Chip   
+            label="ESPACIOS ÚNICOS"  
+            sx={{ 
+              mb: 2, 
+              fontWeight: 600, 
+              px: 2,
+              py: 1,
+              backgroundColor: "#f3a384",
+              color: "white",
+              fontSize: "0.85rem",
+              letterSpacing: "0.5px",
+              boxShadow: "0 4px 12px rgba(243, 163, 132, 0.3)"
+            }}
+          />
+          <Typography variant="h3" sx={{ 
+            mb: 2, 
+            color: "#0b7583", 
+            fontWeight: 700,
+            textShadow: "0 2px 4px rgba(11, 117, 131, 0.1)"
+          }}>
+            Departamentos y Habitaciones
+          </Typography>
+          <Typography variant="h6" sx={{ 
+            color: "#549c94", 
+            fontWeight: 400, 
+            maxWidth: 700, 
+            mx: "auto",
+            lineHeight: 1.6
+          }}>
+            Espacios únicos y cómodos para tu estadía perfecta
+          </Typography>
+        </Box>
+
+        <Tabs
+          value={activeTab}
+          onChange={(e, v) => setActiveTab(v)}
+          centered
+          sx={{
+            mb: 4,
+            backgroundColor: "#b3c9ca",
+            borderRadius: "25px",
+            padding: "8px",
+            boxShadow: "0 4px 20px rgba(11, 117, 131, 0.1)",
+            "& .MuiTabs-indicator": {
+              backgroundColor: "#b3c9ca",
+              height: 4,
+              borderRadius: "4px",
+            },
+            "& .MuiTab-root": {
+              fontWeight: 600,
+              fontSize: "1rem",
+              textTransform: "none",
+              minWidth: 120,
+              color: "#549c94",
+              borderRadius: "20px",
+              margin: "0 4px",
+              transition: "all 0.3s ease",
+              "&.Mui-selected": {
+                color: "#0b7583",
+                backgroundColor: "rgba(76, 148, 188, 0.1)",
+              },
+              "&:hover": {
+                color: "#4c94bc",
+                backgroundColor: "rgba(76, 148, 188, 0.05)",
+              },
+            },
+          }}
+        >
+          <Tab label="Todos" />
+          <Tab label="Disponibles" />
+          <Tab label="Más Valorados" />
+        </Tabs>
+
+        <Grid container spacing={3} sx={{ justifyContent: "center" }}>
+          {loading
+            ? Array.from({ length: 8 }).map((_, index) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
+                <Card sx={{ 
+                  height: "100%", 
+                  maxWidth: 320, 
+                  mx: "auto",
+                  borderRadius: "20px",
+                  boxShadow: "0 8px 32px rgba(11, 117, 131, 0.1)"
+                }}>
+                  <Skeleton variant="rectangular" height={180} sx={{ borderRadius: "20px 20px 0 0" }} />
+                  <CardContent>
+                    <Skeleton variant="text" height={28} />
+                    <Skeleton variant="text" height={20} />
+                    <Skeleton variant="text" height={20} width="60%" />
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+            : cuartos.map((cuarto) => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={cuarto.id}>
+                <Card sx={{ 
+                  height: "100%", 
+                  display: "flex", 
+                  flexDirection: "column", 
+                  maxWidth: 320, 
+                  mx: "auto",
+                  borderRadius: "20px",
+                  boxShadow: "0 8px 32px rgba(11, 117, 131, 0.15)",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  overflow: "hidden",
+                  border: "1px solid rgba(179, 201, 202, 0.3)",
+                  "&:hover": {
+                    transform: "translateY(-8px)",
+                    boxShadow: "0 16px 48px rgba(11, 117, 131, 0.25)",
+                  }
+                }}>
+                  <Box sx={{ position: "relative" }}>
+                    <CardMedia
+                      component="img"
+                      height={180}
+                      image={getCuartoImages(cuarto.imagenes)}
+                      alt={cuarto.cuarto}
+                      sx={{
+                        transition: "transform 0.5s ease",
+                        "&:hover": { transform: "scale(1.05)" }
+                      }}
+                    />
+                    <IconButton
+                      sx={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        backgroundColor: "rgba(255, 255, 255, 0.95)",
+                        backdropFilter: "blur(10px)",
+                        border: "1px solid rgba(179, 201, 202, 0.3)",
+                        "&:hover": { 
+                          backgroundColor: "white", 
+                          transform: "scale(1.1)",
+                          boxShadow: "0 4px 16px rgba(243, 163, 132, 0.3)"
+                        },
+                        transition: "all 0.2s ease",
+                        zIndex: 2,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(cuarto.id, "cuarto");
+                      }}
+                    >
+                      {favorites.has(`cuarto-${cuarto.id}`) ?
+                        <Favorite sx={{ color: "#f3a384" }} /> :
+                        <FavoriteBorder sx={{ color: "#549c94" }} />
+                      }
+                    </IconButton>
+                    <Chip
+                      label={cuarto.estado === "Disponible" ? "Disponible" : "No Disponible"}
+                      size="small"
+                      sx={{
+                        position: "absolute",
+                        top: 12,
+                        left: 12,
+                        fontWeight: 600,
+                        zIndex: 2,
+                        backgroundColor: cuarto.estado === "Disponible" ? "#549c94" : "#f3a384",
+                        color: "white",
+                        borderRadius: "12px",
+                        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+                      }}
+                    />
+                    {cuarto.estado === "Disponible" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: 12,
+                          right: 12,
+                          bgcolor: "rgba(255, 255, 255, 0.95)",
+                          backdropFilter: "blur(10px)",
+                          borderRadius: "12px",
+                          px: 1.5,
+                          py: 0.5,
+                          display: "flex",
+                          alignItems: "center",
+                          zIndex: 2,
+                          border: "1px solid rgba(84, 156, 148, 0.3)",
+                        }}
+                      >
+                        <CheckCircle sx={{ fontSize: 14, color: "#549c94", mr: 0.5 }} />
+                        <Typography variant="caption" fontWeight="bold" sx={{ 
+                          color: "#0b7583", 
+                          fontSize: "0.7rem" 
+                        }}>
+                          Verificado
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                  <CardContent sx={{ 
+                    flexGrow: 1, 
+                    p: 2.5, 
+                    display: "flex", 
+                    flexDirection: "column",
+                    background: "linear-gradient(to bottom, #ffffff 0%, rgba(179, 201, 202, 0.02) 100%)"
+                  }}>
+                    <Typography variant="h6" sx={{ 
+                      mb: 1, 
+                      fontWeight: 600, 
+                      fontSize: "1.1rem",
+                      color: "#0b7583"
+                    }}>
+                      {cuarto.cuarto}
+                    </Typography>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                      <LocationOn sx={{ fontSize: 16, color: "#549c94", mr: 0.5 }} />
+                      <Typography variant="body2" sx={{ 
+                        fontSize: "0.85rem",
+                        color: "#549c94"
+                      }}>
+                        {cuarto.direccion || "Ubicación no especificada"}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Rating
+                        value={0}
+                        precision={0.5}
+                        size="small"
+                        sx={{
+                          "& .MuiRating-iconEmpty": {
+                            color: "#b3c9ca"
+                          },
+                          "& .MuiRating-iconFilled": {
+                            color: "#f3a384"
+                          }
+                        }}
+                        onChange={(event, newValue) => {
+                          console.log('Nueva calificación para cuarto:', cuarto.id, newValue);
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ 
+                        ml: 1, 
+                        color: "#549c94", 
+                        fontSize: "0.75rem" 
+                      }}>
+                        Califica este hotel
+                      </Typography>
+                    </Box>
+
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mb: 2,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        height: "36px",
+                        fontSize: "0.85rem",
+                        color: "#549c94",
+                        lineHeight: 1.4
+                      }}
+                    >
+                      {cuarto.descripcion || "Espacio cómodo y moderno para tu estancia"}
+                    </Typography>
+
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Bed sx={{ fontSize: 16, color: "#4c94bc", mr: 0.5 }} />
+                      <Typography variant="body2" sx={{ 
+                        fontSize: "0.85rem",
+                        color: "#549c94"
+                      }}>
+                        {cuarto.numhabitacion || "1"} habitación disponible
+                      </Typography>
+                    </Box>
+
+                    {cuarto.servicios && (
+                      <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                        {getServiceIcons(cuarto.servicios).map((icon, index) => (
+                          <Tooltip
+                            key={index}
+                            title={
+                              index === 0 ? "WiFi" :
+                                index === 1 ? "Estacionamiento" :
+                                  index === 2 ? "Restaurante" : ""
+                            }
+                          >
+                            <Box sx={{
+                              color: "#0b7583",
+                              bgcolor: "rgba(76, 148, 188, 0.1)",
+                              border: "1px solid rgba(76, 148, 188, 0.2)",
+                              p: 0.8,
+                              borderRadius: "10px",
+                              fontSize: "0.9rem",
+                              transition: "all 0.2s ease",
+                              "&:hover": {
+                                bgcolor: "rgba(76, 148, 188, 0.2)",
+                                transform: "translateY(-1px)"
+                              }
+                            }}>
+                              {icon}
+                            </Box>
+                          </Tooltip>
+                        ))}
+                      </Box>
+                    )}
+
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontWeight: 700,
+                        color: "#0b7583",
+                        mb: 1,
+                        fontSize: "1.2rem",
+                      }}
+                    >
+                      ${cuarto.preciodia || "100"}
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 400,
+                          color: "#549c94",
+                          fontSize: "0.8rem",
+                          ml: 0.5,
+                        }}
+                      >
+                        /día
+                      </Typography>
+                    </Typography>
+
+                    <Typography variant="body2" sx={{ 
+                      mb: 2, 
+                      fontSize: "0.75rem",
+                      color: "#549c94"
+                    }}>
+                      Horario: {cuarto.horario || "2025-05-23T09:00:00Z - 2025-05-23T18:00:00Z"}
+                    </Typography>
+
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      size="small"
+                      sx={{
+                        mt: "auto",
+                        py: 1.2,
+                        background: "linear-gradient(135deg, #4c94bc 0%, #0b7583 100%)",
+                        borderRadius: "12px",
+                        fontWeight: 600,
+                        textTransform: "none",
+                        boxShadow: "0 4px 16px rgba(76, 148, 188, 0.3)",
+                        transition: "all 0.3s ease",
+                        "&:hover": {
+                          background: "linear-gradient(135deg, #0b7583 0%, #4c94bc 100%)",
+                          transform: "translateY(-2px)",
+                          boxShadow: "0 8px 24px rgba(76, 148, 188, 0.4)",
+                        }
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCardClick(cuarto.id);
+                      }}
+                    >
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+    </Grid>
+  </Container>
+</Box>
+</Box>
 
       {/* Modal para detalles del hotel */}
       <HotelDetailModal

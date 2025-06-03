@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-import Swal from "sweetalert2";
-import withReactContent from "sweetalert2-react-content";
-import { useAuth } from './AuthContext'; 
-import { FaEye, FaEyeSlash } from 'react-icons/fa';  
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+import { useAuth } from './AuthContext';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const MySwal = withReactContent(Swal);
-//http://localhost:3000
-//https://backendd-q0zc.onrender.com
-// URL base del backend para desarrollo local
-const API_BASE_URL = "https://backendd-q0zc.onrender.com";
+const API_BASE_URL = 'https://backendd-q0zc.onrender.com';
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth(); 
+  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,23 +20,25 @@ function Login() {
     e.preventDefault();
 
     try {
-        const response = await axios.post(`${API_BASE_URL}/api/login`, {
-            user: username,
-            password: password,
+      const response = await axios.post(`${API_BASE_URL}/api/login`, {
+        user: username,
+        password: password,
+      });
+
+      const { message, tipo, user: userData } = response.data;
+
+      if (message === 'Inicio de sesión exitoso') {
+        // Guardar los datos del usuario, incluyendo id_usuario
+        login(userData.Usuario, tipo, userData);
+        localStorage.setItem('id_usuario', userData.id_usuario); // Cambiado de id a id_usuario
+        const ruta = tipo === 'Administrador' ? '/admin' : '/cliente';
+        navigate(ruta);
+        MySwal.fire({
+          icon: 'success',
+          title: 'Éxito',
+          text: 'Inicio de sesión exitoso',
         });
-
-        const { message, tipo, user: userData } = response.data;
-
-        if (message === 'Inicio de sesión exitoso') {
-            login(username, tipo, userData);  
-            const ruta = tipo === 'Administrador' ? '/admin' : '/cliente';
-            navigate(ruta); 
-            MySwal.fire({
-                icon: 'success',
-                title: 'Éxito',
-                text: 'Inicio de sesión exitoso',
-            });
-        }
+      }
     } catch (error) {
       if (error.response) {
         const { error: serverError } = error.response.data;

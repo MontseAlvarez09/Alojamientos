@@ -19,7 +19,7 @@ const { Footer } = Layout;
 const { Text } = Typography;
 
 // URL base del backend
-const API_BASE_URL = "https://backendd-q0zc.onrender.com";
+const API_BASE_URL = "https://backendd-q0zc.onrender.com"; // Cambia esto a tu URL de backend
 
 const PieDePagina = () => {
   const [datosEmpresa, setDatosEmpresa] = useState({

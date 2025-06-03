@@ -20,6 +20,8 @@ import {
   InputLabel,
   FormControl,
   Input,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -29,17 +31,16 @@ import CloseIcon from '@mui/icons-material/Close';
 const Cuartos = () => {
   const [cuartos, setCuartos] = useState([]);
   const [hoteles, setHoteles] = useState([]);
+  const [tiposHabitacion, setTiposHabitacion] = useState([]);
   const [formData, setFormData] = useState({
     cuarto: '',
     estado: 'Disponible',
-    horario: '',
-    imagenes: [],
-    existingImages: [],
+    horario: false,
     id_hoteles: '',
-    preciohora: '',
-    preciodia: '',
-    precionoche: '',
-    preciosemana: '',
+    idtipohabitacion: '',
+    imagenes: [],
+    imagenhabitacion: null,
+    existingImages: [],
   });
   const [editingId, setEditingId] = useState(null);
   const [openModal, setOpenModal] = useState(false);
@@ -48,6 +49,7 @@ const Cuartos = () => {
   useEffect(() => {
     fetchCuartos();
     fetchHoteles();
+    fetchTiposHabitacion();
   }, []);
 
   const fetchCuartos = async () => {
@@ -71,20 +73,38 @@ const Cuartos = () => {
     }
   };
 
+  const fetchTiposHabitacion = async () => {
+    try {
+      const response = await axios.get('https://backendd-q0zc.onrender.com/api/tipohabitacion');
+      setTiposHabitacion(response.data);
+    } catch (error) {
+      console.error('Error al obtener tipos de habitación:', error);
+      setErrorMessage('Error al cargar los tipos de habitación. Intente de nuevo.');
+    }
+  };
+
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    setFormData({
-      ...formData,
-      imagenes: [...formData.imagenes, ...files],
-    });
+  const handleImageChange = (e, field) => {
+    const file = e.target.files[0];
+    if (field === 'imagenes') {
+      const files = Array.from(e.target.files);
+      setFormData({
+        ...formData,
+        imagenes: [...formData.imagenes, ...files],
+      });
+    } else if (field === 'imagenhabitacion') {
+      setFormData({
+        ...formData,
+        imagenhabitacion: file,
+      });
+    }
   };
 
   const handleRemoveImage = (index, isExisting) => {
@@ -92,6 +112,11 @@ const Cuartos = () => {
       setFormData({
         ...formData,
         existingImages: formData.existingImages.filter((_, i) => i !== index),
+      });
+    } else if (index === 'imagenhabitacion') {
+      setFormData({
+        ...formData,
+        imagenhabitacion: null,
       });
     } else {
       setFormData({
@@ -108,12 +133,9 @@ const Cuartos = () => {
     formDataToSend.append('estado', formData.estado);
     formDataToSend.append('horario', formData.horario);
     formDataToSend.append('id_hoteles', formData.id_hoteles);
-    formDataToSend.append('preciohora', formData.preciohora || '');
-    formDataToSend.append('preciodia', formData.preciodia || '');
-    formDataToSend.append('precionoche', formData.precionoche || '');
-    formDataToSend.append('preciosemana', formData.preciosemana || '');
+    formDataToSend.append('idtipohabitacion', formData.idtipohabitacion);
 
-    const originalImages = editingId ? parseImagesSafely(cuartos.find(c => c.id === editingId)?.imagenes) : [];
+    const originalImages = editingId ? cuartos.find(c => c.id === editingId)?.imagenes || [] : [];
     const imagesToRemove = originalImages
       .map((img, index) => (formData.existingImages.includes(img) ? -1 : index))
       .filter(index => index !== -1);
@@ -124,6 +146,9 @@ const Cuartos = () => {
     formData.imagenes.forEach((image) => {
       formDataToSend.append('imagenes', image);
     });
+    if (formData.imagenhabitacion) {
+      formDataToSend.append('imagenhabitacion', formData.imagenhabitacion);
+    }
 
     try {
       if (editingId) {
@@ -158,18 +183,15 @@ const Cuartos = () => {
   };
 
   const handleEdit = (cuarto) => {
-    const existingImages = parseImagesSafely(cuarto.imagenes);
     setFormData({
       cuarto: cuarto.cuarto,
       estado: cuarto.estado,
-      horario: cuarto.horario ? new Date(cuarto.horario).toISOString().slice(0, 16) : '',
-      imagenes: [],
-      existingImages,
+      horario: cuarto.horario === '24 horas',
       id_hoteles: cuarto.id_hoteles,
-      preciohora: cuarto.preciohora || '',
-      preciodia: cuarto.preciodia || '',
-      precionoche: cuarto.precionoche || '',
-      preciosemana: cuarto.preciosemana || '',
+      idtipohabitacion: cuarto.idtipohabitacion,
+      imagenes: [],
+      imagenhabitacion: null,
+      existingImages: cuarto.imagenes || [],
     });
     setEditingId(cuarto.id);
     setOpenModal(true);
@@ -179,60 +201,68 @@ const Cuartos = () => {
     setFormData({
       cuarto: '',
       estado: 'Disponible',
-      horario: '',
-      imagenes: [],
-      existingImages: [],
+      horario: false,
       id_hoteles: '',
-      preciohora: '',
-      preciodia: '',
-      precionoche: '',
-      preciosemana: '',
+      idtipohabitacion: '',
+      imagenes: [],
+      imagenhabitacion: null,
+      existingImages: [],
     });
     setEditingId(null);
     setOpenModal(false);
   };
 
-  const parseImagesSafely = (imagenes) => {
-    try {
-      if (!imagenes) return [];
-      return JSON.parse(imagenes);
-    } catch (error) {
-      console.error('Error al parsear imágenes:', error.message);
-      return [];
-    }
-  };
-
   return (
-    <Container maxWidth="lg" sx={{ py: 4, background: 'linear-gradient(to bottom, rgb(255, 255, 255), #ffffff)', minHeight: '100vh' }}>
-      <Typography variant="h4" align="center" gutterBottom sx={{ color: '#1976d2', fontWeight: 'bold' }}>
+    <Container maxWidth="lg" sx={{ py: 4, backgroundColor: '#ffffff', minHeight: '100vh' }}>
+      <Typography variant="h4" align="center" gutterBottom sx={{ 
+        color: '#0b7583', 
+        fontWeight: '600',
+        textShadow: '0 2px 4px rgba(11, 117, 131, 0.1)',
+        mb: 4
+      }}>
         Gestión de Habitaciones
       </Typography>
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
         <Button
           variant="contained"
-          color="primary"
           startIcon={<AddIcon />}
           onClick={() => setOpenModal(true)}
           sx={{
-            background: 'linear-gradient(90deg, #1976d2, #42a5f5)',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            fontWeight: 'bold',
+            background: 'linear-gradient(135deg, #0b7583 0%, #549c94 100%)',
+            padding: '12px 24px',
+            borderRadius: '10px',
+            fontWeight: '500',
+            textTransform: 'none',
+            fontSize: '1rem',
+            boxShadow: '0 4px 15px rgba(11, 117, 131, 0.3)',
+            border: 'none',
             '&:hover': {
-              background: 'linear-gradient(90deg, #1565c0, #1976d2)',
+              background: 'linear-gradient(135deg, #085a66 0%, #427a74 100%)',
               transform: 'translateY(-2px)',
-              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+              boxShadow: '0 6px 20px rgba(11, 117, 131, 0.4)',
             },
+            transition: 'all 0.3s ease',
           }}
         >
-          Agregar Cuarto
+          Agregar Habitación
         </Button>
       </Box>
 
       {errorMessage && (
-        <Box sx={{ mb: 2 }}>
-          <Alert severity="error" onClose={() => setErrorMessage('')}>
+        <Box sx={{ mb: 3 }}>
+          <Alert 
+            severity="error" 
+            onClose={() => setErrorMessage('')}
+            sx={{
+              borderRadius: '10px',
+              backgroundColor: 'rgba(243, 163, 132, 0.1)',
+              border: '1px solid rgba(243, 163, 132, 0.3)',
+              '& .MuiAlert-icon': {
+                color: '#f3a384'
+              }
+            }}
+          >
             {errorMessage}
           </Alert>
         </Box>
@@ -245,31 +275,50 @@ const Cuartos = () => {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: { xs: '90%', md: 600 },
+            width: { xs: '95%', sm: '85%', md: 650 },
             bgcolor: 'background.paper',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 20px 60px rgba(11, 117, 131, 0.15)',
             p: 4,
-            borderRadius: 2,
-            maxHeight: '80vh',
+            borderRadius: '16px',
+            maxHeight: '85vh',
             overflowY: 'auto',
-            border: '2px solid #e3f2fd',
+            border: '1px solid rgba(76, 148, 188, 0.3)',
+            backgroundColor: '#ffffff',
           }}
         >
           <Typography
             variant="h5"
             gutterBottom
             sx={{
-              color: '#1976d2',
-              fontWeight: 'bold',
+              color: '#0b7583',
+              fontWeight: '600',
               textAlign: 'center',
-              mb: 3,
+              mb: 4,
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: '-8px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '60px',
+                height: '3px',
+                background: 'linear-gradient(90deg, #4c94bc, #549c94)',
+                borderRadius: '2px',
+              }
             }}
           >
-            {editingId ? 'Editar Cuarto' : 'Agregar Cuarto'}
+            {editingId ? 'Editar Habitación' : 'Nueva Habitación'}
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2.5 }}>
+          
+          <Box component="form" onSubmit={handleSubmit} sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, 
+            gap: 3,
+            mt: 3
+          }}>
             <TextField
-              label="Nombre del Cuarto"
+              label="Nombre de la Habitación"
               name="cuarto"
               type="text"
               value={formData.cuarto}
@@ -279,29 +328,40 @@ const Cuartos = () => {
               required
               inputProps={{ pattern: "[A-Za-z0-9 ]+" }}
               sx={{
-                mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
-                  backgroundColor: '#f5f5f5',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(179, 201, 202, 0.08)',
+                  transition: 'all 0.3s ease',
+                  '& fieldset': {
+                    borderColor: 'rgba(76, 148, 188, 0.3)',
+                    borderWidth: '1.5px',
+                  },
                   '&:hover fieldset': {
-                    borderColor: '#1976d2',
+                    borderColor: '#4c94bc',
+                    borderWidth: '2px',
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#1976d2',
-                    boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
+                    borderColor: '#0b7583',
+                    borderWidth: '2px',
+                    boxShadow: '0 0 0 3px rgba(76, 148, 188, 0.1)',
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#555',
+                  color: '#549c94',
                   fontWeight: '500',
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#1976d2',
+                  '&.Mui-focused': {
+                    color: '#0b7583',
+                  },
                 },
               }}
             />
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel sx={{ color: '#555', fontWeight: '500', '&.Mui-focused': { color: '#1976d2' } }}>
+
+            <FormControl fullWidth>
+              <InputLabel sx={{ 
+                color: '#549c94', 
+                fontWeight: '500',
+                '&.Mui-focused': { color: '#0b7583' }
+              }}>
                 Estado
               </InputLabel>
               <Select
@@ -311,56 +371,70 @@ const Cuartos = () => {
                 variant="outlined"
                 required
                 sx={{
-                  borderRadius: '8px',
-                  backgroundColor: '#f5f5f5',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(179, 201, 202, 0.08)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(76, 148, 188, 0.3)',
+                    borderWidth: '1.5px',
+                  },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#1976d2',
+                    borderColor: '#4c94bc',
+                    borderWidth: '2px',
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#1976d2',
-                    boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
+                    borderColor: '#0b7583',
+                    borderWidth: '2px',
+                    boxShadow: '0 0 0 3px rgba(76, 148, 188, 0.1)',
                   },
                 }}
               >
-                <MenuItem value="Disponible">Disponible</MenuItem>
-                <MenuItem value="NoDisponible">No Disponible</MenuItem>
-                <MenuItem value="Ocupado">Ocupado</MenuItem>
+                <MenuItem value="Disponible" sx={{ '&:hover': { backgroundColor: 'rgba(84, 156, 148, 0.1)' } }}>
+                  Disponible
+                </MenuItem>
+                <MenuItem value="NoDisponible" sx={{ '&:hover': { backgroundColor: 'rgba(84, 156, 148, 0.1)' } }}>
+                  No Disponible
+                </MenuItem>
+                <MenuItem value="Ocupado" sx={{ '&:hover': { backgroundColor: 'rgba(84, 156, 148, 0.1)' } }}>
+                  Ocupado
+                </MenuItem>
               </Select>
             </FormControl>
-            <TextField
-              label="Horario"
-              name="horario"
-              type="datetime-local"
-              value={formData.horario}
-              onChange={handleInputChange}
-              variant="outlined"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ step: 300 }}
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="horario"
+                  checked={formData.horario}
+                  onChange={handleInputChange}
+                  sx={{
+                    color: '#4c94bc',
+                    '&.Mui-checked': {
+                      color: '#0b7583',
+                    },
+                    '&:hover': {
+                      backgroundColor: 'rgba(76, 148, 188, 0.1)',
+                    },
+                  }}
+                />
+              }
+              label="¿Trabaja 24 horas?"
               sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
-                  backgroundColor: '#f5f5f5',
-                  '&:hover fieldset': {
-                    borderColor: '#1976d2',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#1976d2',
-                    boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#555',
-                  fontWeight: '500',
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#1976d2',
+                gridColumn: '1 / -1',
+                color: '#549c94',
+                fontWeight: '500',
+                mx: 1,
+                '& .MuiFormControlLabel-label': {
+                  fontSize: '0.95rem',
                 },
               }}
             />
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel sx={{ color: '#555', fontWeight: '500', '&.Mui-focused': { color: '#1976d2' } }}>
+
+            <FormControl fullWidth>
+              <InputLabel sx={{ 
+                color: '#549c94', 
+                fontWeight: '500',
+                '&.Mui-focused': { color: '#0b7583' }
+              }}>
                 Hotel
               </InputLabel>
               <Select
@@ -371,92 +445,128 @@ const Cuartos = () => {
                 required
                 disabled={editingId !== null}
                 sx={{
-                  borderRadius: '8px',
-                  backgroundColor: '#f5f5f5',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(179, 201, 202, 0.08)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(76, 148, 188, 0.3)',
+                    borderWidth: '1.5px',
+                  },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#1976d2',
+                    borderColor: '#4c94bc',
+                    borderWidth: '2px',
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#1976d2',
-                    boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
+                    borderColor: '#0b7583',
+                    borderWidth: '2px',
+                    boxShadow: '0 0 0 3px rgba(76, 148, 188, 0.1)',
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: 'rgba(179, 201, 202, 0.15)',
                   },
                 }}
               >
                 {hoteles.map((hotel) => (
-                  <MenuItem key={hotel.id_hotel} value={hotel.id_hotel}>
+                  <MenuItem 
+                    key={hotel.id_hotel} 
+                    value={hotel.id_hotel}
+                    sx={{ '&:hover': { backgroundColor: 'rgba(84, 156, 148, 0.1)' } }}
+                  >
                     {hotel.nombrehotel}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            {[
-              { label: 'Precio por Hora', name: 'preciohora', type: 'number', inputProps: { step: '0.01', min: 0 } },
-              { label: 'Precio por Día', name: 'preciodia', type: 'number', inputProps: { step: '0.01', min: 0 } },
-              { label: 'Precio por Noche', name: 'precionoche', type: 'number', inputProps: { step: '0.01', min: 0 } },
-              { label: 'Precio por Semana', name: 'preciosemana', type: 'number', inputProps: { step: '0.01', min: 0 } },
-            ].map(({ label, name, type, inputProps }) => (
-              <TextField
-                key={name}
-                label={label}
-                name={name}
-                type={type}
-                value={formData[name] || ''}
+
+            <FormControl fullWidth>
+              <InputLabel sx={{ 
+                color: '#549c94', 
+                fontWeight: '500',
+                '&.Mui-focused': { color: '#0b7583' }
+              }}>
+                Tipo de Habitación
+              </InputLabel>
+              <Select
+                name="idtipohabitacion"
+                value={formData.idtipohabitacion}
                 onChange={handleInputChange}
                 variant="outlined"
-                fullWidth
-                inputProps={inputProps}
+                required
                 sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                    backgroundColor: '#f5f5f5',
-                    '&:hover fieldset': {
-                      borderColor: '#1976d2',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#1976d2',
-                      boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)',
-                    },
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(179, 201, 202, 0.08)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(76, 148, 188, 0.3)',
+                    borderWidth: '1.5px',
                   },
-                  '& .MuiInputLabel-root': {
-                    color: '#555',
-                    fontWeight: '500',
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#4c94bc',
+                    borderWidth: '2px',
                   },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#1976d2',
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#0b7583',
+                    borderWidth: '2px',
+                    boxShadow: '0 0 0 3px rgba(76, 148, 188, 0.1)',
                   },
                 }}
-              />
-            ))}
-            <Box sx={{ mb: 2, gridColumn: '1 / -1' }}>
-              <InputLabel sx={{ color: '#555', fontWeight: '500', mb: 1 }}>
-                Imágenes (puede subir varias)
+              >
+                {tiposHabitacion.map((tipo) => (
+                  <MenuItem 
+                    key={tipo.id_tipohabitacion} 
+                    value={tipo.id_tipohabitacion}
+                    sx={{ '&:hover': { backgroundColor: 'rgba(84, 156, 148, 0.1)' } }}
+                  >
+                    {tipo.tipohabitacion}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Box sx={{ gridColumn: '1 / -1', mt: 1 }}>
+              <InputLabel sx={{ 
+                color: '#549c94', 
+                fontWeight: '500', 
+                mb: 1.5,
+                fontSize: '1rem'
+              }}>
+                Imágenes de la habitación (Galería)
               </InputLabel>
               <Input
                 type="file"
                 name="imagenes"
-                onChange={handleImageChange}
+                onChange={(e) => handleImageChange(e, 'imagenes')}
                 inputProps={{ multiple: true, accept: 'image/*' }}
                 fullWidth
                 sx={{
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '8px',
-                  padding: '8px',
+                  backgroundColor: 'rgba(179, 201, 202, 0.08)',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  border: '1.5px dashed rgba(76, 148, 188, 0.4)',
+                  '&:hover': {
+                    borderColor: '#4c94bc',
+                    backgroundColor: 'rgba(179, 201, 202, 0.12)',
+                  },
+                  '&:before': {
+                    display: 'none',
+                  },
+                  '&:after': {
+                    display: 'none',
+                  },
                 }}
               />
               {(formData.existingImages.length > 0 || formData.imagenes.length > 0) && (
-                <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                   {formData.existingImages.map((image, index) => (
                     <Box key={`existing-${index}`} sx={{ position: 'relative', display: 'inline-block' }}>
                       <img
                         src={`data:image/jpeg;base64,${image}`}
                         alt={`Imagen existente ${index + 1}`}
                         style={{
-                          height: '64px',
-                          width: '64px',
+                          height: '80px',
+                          width: '80px',
                           objectFit: 'cover',
-                          borderRadius: '4px',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(11, 117, 131, 0.15)',
+                          border: '2px solid rgba(76, 148, 188, 0.3)',
                         }}
                       />
                       <IconButton
@@ -464,11 +574,17 @@ const Cuartos = () => {
                         onClick={() => handleRemoveImage(index, true)}
                         sx={{
                           position: 'absolute',
-                          top: 0,
-                          right: 0,
+                          top: -8,
+                          right: -8,
                           color: 'white',
-                          backgroundColor: 'rgba(239, 83, 80, 0.7)',
-                          '&:hover': { backgroundColor: 'rgba(239, 83, 80, 1)' },
+                          backgroundColor: '#f3a384',
+                          width: '24px',
+                          height: '24px',
+                          '&:hover': { 
+                            backgroundColor: '#e89670',
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s ease',
                         }}
                       >
                         <CloseIcon fontSize="small" />
@@ -481,11 +597,12 @@ const Cuartos = () => {
                         src={URL.createObjectURL(image)}
                         alt={`Vista previa ${index + 1}`}
                         style={{
-                          height: '64px',
-                          width: '64px',
+                          height: '80px',
+                          width: '80px',
                           objectFit: 'cover',
-                          borderRadius: '4px',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(11, 117, 131, 0.15)',
+                          border: '2px solid rgba(76, 148, 188, 0.3)',
                         }}
                       />
                       <IconButton
@@ -493,11 +610,17 @@ const Cuartos = () => {
                         onClick={() => handleRemoveImage(index, false)}
                         sx={{
                           position: 'absolute',
-                          top: 0,
-                          right: 0,
+                          top: -8,
+                          right: -8,
                           color: 'white',
-                          backgroundColor: 'rgba(239, 83, 80, 0.7)',
-                          '&:hover': { backgroundColor: 'rgba(239, 83, 80, 1)' },
+                          backgroundColor: '#f3a384',
+                          width: '24px',
+                          height: '24px',
+                          '&:hover': { 
+                            backgroundColor: '#e89670',
+                            transform: 'scale(1.1)',
+                          },
+                          transition: 'all 0.2s ease',
                         }}
                       >
                         <CloseIcon fontSize="small" />
@@ -507,38 +630,126 @@ const Cuartos = () => {
                 </Box>
               )}
             </Box>
-            <Box sx={{ gridColumn: '1 / -1', display: 'flex', gap: 2, justifyContent: 'center' }}>
+
+            <Box sx={{ gridColumn: '1 / -1', mt: 3 }}>
+              <InputLabel sx={{ 
+                color: '#549c94', 
+                fontWeight: '500', 
+                mb: 1.5,
+                fontSize: '1rem'
+              }}>
+                Imagen Principal (Imagen de Portada)
+              </InputLabel>
+              <Input
+                type="file"
+                name="imagenhabitacion"
+                onChange={(e) => handleImageChange(e, 'imagenhabitacion')}
+                inputProps={{ accept: 'image/*' }}
+                fullWidth
+                sx={{
+                  backgroundColor: 'rgba(179, 201, 202, 0.08)',
+                  borderRadius: '10px',
+                  padding: '12px 16px',
+                  border: '1.5px dashed rgba(76, 148, 188, 0.4)',
+                  '&:hover': {
+                    borderColor: '#4c94bc',
+                    backgroundColor: 'rgba(179, 201, 202, 0.12)',
+                  },
+                  '&:before': {
+                    display: 'none',
+                  },
+                  '&:after': {
+                    display: 'none',
+                  },
+                }}
+              />
+              {formData.imagenhabitacion && (
+                <Box sx={{ mt: 2, position: 'relative', display: 'inline-block' }}>
+                  <img
+                    src={URL.createObjectURL(formData.imagenhabitacion)}
+                    alt="Vista previa imagen principal"
+                    style={{
+                      height: '80px',
+                      width: '80px',
+                      objectFit: 'cover',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(11, 117, 131, 0.15)',
+                      border: '2px solid rgba(76, 148, 188, 0.3)',
+                    }}
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveImage('imagenhabitacion', false)}
+                    sx={{
+                      position: 'absolute',
+                      top: -8,
+                      right: -8,
+                      color: 'white',
+                      backgroundColor: '#f3a384',
+                      width: '24px',
+                      height: '24px',
+                      '&:hover': { 
+                        backgroundColor: '#e89670',
+                        transform: 'scale(1.1)',
+                      },
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              )}
+            </Box>
+
+            <Box sx={{ 
+              gridColumn: '1 / -1', 
+              display: 'flex', 
+              gap: 3, 
+              justifyContent: 'center',
+              mt: 4,
+              pt: 3,
+              borderTop: '1px solid rgba(76, 148, 188, 0.2)'
+            }}>
               <Button
                 type="submit"
                 variant="contained"
                 sx={{
-                  mt: 1,
-                  background: 'linear-gradient(90deg, #1976d2, #42a5f5)',
-                  borderRadius: '8px',
-                  padding: '10px 24px',
-                  fontWeight: 'bold',
+                  background: 'linear-gradient(135deg, #0b7583 0%, #549c94 100%)',
+                  borderRadius: '10px',
+                  padding: '12px 32px',
+                  fontWeight: '500',
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  minWidth: '120px',
+                  boxShadow: '0 4px 15px rgba(11, 117, 131, 0.3)',
                   '&:hover': {
-                    background: 'linear-gradient(90deg, #1565c0, #1976d2)',
+                    background: 'linear-gradient(135deg, #085a66 0%, #427a74 100%)',
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                    boxShadow: '0 6px 20px rgba(11, 117, 131, 0.4)',
                   },
+                  transition: 'all 0.3s ease',
                 }}
               >
-                {editingId ? 'Actualizar' : 'Agregar'}
+                {editingId ? 'Actualizar' : 'Crear Habitación'}
               </Button>
               <Button
-                variant="contained"
+                variant="outlined"
                 sx={{
-                  mt: 1,
-                  background: 'linear-gradient(90deg, #ef5350, #f44336)',
-                  borderRadius: '8px',
-                  padding: '10px 24px',
-                  fontWeight: 'bold',
+                  borderColor: '#f3a384',
+                  color: '#f3a384',
+                  borderRadius: '10px',
+                  padding: '12px 32px',
+                  fontWeight: '500',
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  minWidth: '120px',
+                  borderWidth: '1.5px',
                   '&:hover': {
-                    background: 'linear-gradient(90deg, #d32f2f, #ef5350)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(239, 83, 80, 0.3)',
+                    borderColor: '#e89670',
+                    backgroundColor: 'rgba(243, 163, 132, 0.08)',
+                    borderWidth: '1.5px',
                   },
+                  transition: 'all 0.3s ease',
                 }}
                 onClick={resetForm}
               >
@@ -550,25 +761,32 @@ const Cuartos = () => {
       </Modal>
 
       <Paper
-        elevation={3}
+        elevation={0}
         sx={{
-          borderRadius: '12px',
+          borderRadius: '16px',
           overflow: 'hidden',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 8px 32px rgba(76, 148, 188, 0.15)',
+          border: '1px solid rgba(76, 148, 188, 0.2)',
+          background: 'linear-gradient(145deg, #ffffff 0%, rgba(179, 201, 202, 0.05) 100%)',
         }}
       >
-        <Table sx={{ minWidth: 650 }} aria-label="cuartos table">
-          <TableHead sx={{ backgroundColor: '#e3f2fd' }}>
+        <Table sx={{ minWidth: 650 }} aria-label="tabla de habitaciones">
+          <TableHead sx={{ 
+            background: '#0b7583'
+          }}>
             <TableRow>
-              {['Nombre', 'Estado', 'Horario', 'Hotel', 'Precio/Hora', 'Precio/Día', 'Precio/Noche', 'Precio/Semana', 'Imágenes', 'Acciones'].map(
+              {['Nombre', 'Estado', 'Horario', 'Hotel', 'Tipo de Habitación', 'Imagen Principal', 'Imágenes', 'Acciones'].map(
                 (head) => (
                   <TableCell
                     key={head}
                     sx={{
-                      fontWeight: 'bold',
-                      color: '#1976d2',
-                      fontSize: '1rem',
-                      padding: '16px',
+                      fontWeight: '600',
+                      color: '#ffffff',
+                      fontSize: '0.95rem',
+                      padding: '20px 16px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      borderBottom: '2px solid rgba(11, 117, 131, 0.1)',
                     }}
                   >
                     {head}
@@ -578,77 +796,134 @@ const Cuartos = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {cuartos.map((cuarto) => (
+            {cuartos.map((cuarto, index) => (
               <TableRow
                 key={cuarto.id}
                 sx={{
-                  '&:hover': { backgroundColor: '#f5f5f5' },
-                  transition: 'background-color 0.3s',
-                  backgroundColor: cuarto.estado === 'NoDisponible' || cuarto.estado === 'Ocupado' ? '#ffebee' : 'inherit',
+                  '&:hover': { 
+                    backgroundColor: 'rgba(76, 148, 188, 0.08)',
+                    transform: 'scale(1.001)',
+                  },
+                  transition: 'all 0.2s ease',
+                  backgroundColor: index % 2 === 0 ? 'rgba(179, 201, 202, 0.03)' : 'transparent',
+                  borderBottom: '1px solid rgba(179, 201, 202, 0.15)',
+                  ...(cuarto.estado === 'NoDisponible' || cuarto.estado === 'Ocupado' ? {
+                    backgroundColor: 'rgba(243, 163, 132, 0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(243, 163, 132, 0.12)',
+                    }
+                  } : {})
                 }}
               >
-                <TableCell sx={{ color: '#333' }}>{cuarto.cuarto}</TableCell>
-                <TableCell sx={{ color: '#333', fontWeight: cuarto.estado !== 'Disponible' ? 'bold' : 'normal' }}>
+                <TableCell sx={{ 
+                  color: '#0b7583', 
+                  fontWeight: '500',
+                  padding: '16px'
+                }}>
+                  {cuarto.cuarto}
+                </TableCell>
+                <TableCell sx={{ 
+                  color: cuarto.estado === 'Disponible' ? '#549c94' : '#f3a384', 
+                  fontWeight: '500',
+                  padding: '16px'
+                }}>
                   {cuarto.estado}
                 </TableCell>
-                <TableCell sx={{ color: '#333' }}>{cuarto.horario ? new Date(cuarto.horario).toLocaleString() : 'Sin horario'}</TableCell>
-                <TableCell sx={{ color: '#333' }}>
-                  {hoteles.find(hotel => hotel.id_hotel === cuarto.id_hoteles)?.nombrehotel || 'Hotel no encontrado'}
+                <TableCell sx={{ 
+                  color: '#4c94bc',
+                  padding: '16px'
+                }}>
+                  {cuarto.horario || 'Sin horario'}
                 </TableCell>
-                <TableCell sx={{ color: '#333' }}>{cuarto.preciohora ? `$${cuarto.preciohora.toFixed(2)}` : 'No definido'}</TableCell>
-                <TableCell sx={{ color: '#333' }}>{cuarto.preciodia ? `$${cuarto.preciodia.toFixed(2)}` : 'No definido'}</TableCell>
-                <TableCell sx={{ color: '#333' }}>{cuarto.precionoche ? `$${cuarto.precionoche.toFixed(2)}` : 'No definido'}</TableCell>
-                <TableCell sx={{ color: '#333' }}>{cuarto.preciosemana ? `$${cuarto.preciosemana.toFixed(2)}` : 'No definido'}</TableCell>
-                <TableCell>
-                  {(() => {
-                    const images = parseImagesSafely(cuarto.imagenes);
-                    if (images.length > 0) {
-                      return (
-                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          {images.map((img, index) => (
-                            <img
-                              key={index}
-                              src={`data:image/jpeg;base64,${img}`}
-                              alt={`Imagen ${index + 1}`}
-                              style={{
-                                height: '64px',
-                                width: '64px',
-                                objectFit: 'cover',
-                                borderRadius: '4px',
-                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                              }}
-                            />
-                          ))}
-                        </Box>
-                      );
-                    }
-                    return (
-                      <Typography color="textSecondary" sx={{ fontStyle: 'italic' }}>
-                        Sin imágenes
-                      </Typography>
-                    );
-                  })()}
+                <TableCell sx={{ 
+                  color: '#549c94',
+                  padding: '16px'
+                }}>
+                  {cuarto.nombrehotel || 'Hotel no encontrado'}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ 
+                  color: '#4c94bc',
+                  padding: '16px'
+                }}>
+                  {cuarto.tipohabitacion || 'Tipo no encontrado'}
+                </TableCell>
+                <TableCell sx={{ padding: '16px' }}>
+                  {cuarto.imagenhabitacion ? (
+                    <img
+                      src={`data:image/jpeg;base64,${cuarto.imagenhabitacion}`}
+                      alt="Imagen principal"
+                      style={{
+                        height: '50px',
+                        width: '50px',
+                        objectFit: 'cover',
+                        borderRadius: '6px',
+                        boxShadow: '0 2px 8px rgba(11, 117, 131, 0.15)',
+                        border: '1px solid rgba(76, 148, 188, 0.3)',
+                      }}
+                    />
+                  ) : (
+                    <Typography color="textSecondary" sx={{ 
+                      fontStyle: 'italic',
+                      color: '#b3c9ca'
+                    }}>
+                      Sin imagen
+                    </Typography>
+                  )}
+                </TableCell>
+                <TableCell sx={{ padding: '16px' }}>
+                  {cuarto.imagenes && cuarto.imagenes.length > 0 ? (
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {cuarto.imagenes.map((img, imgIndex) => (
+                        <img
+                          key={imgIndex}
+                          src={`data:image/jpeg;base64,${img}`}
+                          alt={`Imagen ${imgIndex + 1}`}
+                          style={{
+                            height: '50px',
+                            width: '50px',
+                            objectFit: 'cover',
+                            borderRadius: '6px',
+                            boxShadow: '0 2px 8px rgba(11, 117, 131, 0.15)',
+                            border: '1px solid rgba(76, 148, 188, 0.3)',
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography color="textSecondary" sx={{ 
+                      fontStyle: 'italic',
+                      color: '#b3c9ca'
+                    }}>
+                      Sin imágenes
+                    </Typography>
+                  )}
+                </TableCell>
+                <TableCell sx={{ padding: '16px' }}>
                   <IconButton
-                    color="primary"
                     onClick={() => handleEdit(cuarto)}
                     sx={{
                       mr: 1,
+                      color: '#4c94bc',
+                      backgroundColor: 'rgba(76, 148, 188, 0.1)',
                       '&:hover': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                        backgroundColor: 'rgba(76, 148, 188, 0.2)',
+                        transform: 'scale(1.1)',
                       },
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     <EditIcon />
                   </IconButton>
                   <IconButton
-                    color="error"
                     onClick={() => handleDelete(cuarto.id)}
                     sx={{
+                      color: '#f3a384',
+                      backgroundColor: 'rgba(243, 163, 132, 0.1)',
                       '&:hover': {
-                        backgroundColor: 'rgba(239, 83, 80, 0.1)',
+                        backgroundColor: 'rgba(243, 163, 132, 0.2)',
+                        transform: 'scale(1.1)',
                       },
+                      transition: 'all 0.2s ease',
                     }}
                   >
                     <DeleteIcon />

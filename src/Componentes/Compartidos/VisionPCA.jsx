@@ -41,11 +41,11 @@ const theme = createTheme({
   },
 });
 
-// URL base del backend para desarrollo local
-const API_BASE_URL = "https://backendd-q0zc.onrender.com";
+// URL base del backend
+const API_BASE_URL = "https://backendd-q0zc.onrender.com"; // Cambia esto según tu configuración
 
 function VisionPCA() {
-  const [vision, setVision] = useState([]);
+  const [visionActiva, setVisionActiva] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const theme = useTheme();
@@ -55,11 +55,13 @@ function VisionPCA() {
     const fetchVision = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/vision`);
-        setVision(response.data);
+        // Filtrar para obtener solo la visión activa
+        const vision = response.data.find(v => v.estado === 'activo');
+        setVisionActiva(vision || null);
         setLoading(false);
       } catch (err) {
         console.error("Error al obtener la Visión:", err);
-        setError("No se pudieron cargar la Visión. Intenta de nuevo más tarde.");
+        setError("No se pudo cargar la Visión. Intenta de nuevo más tarde.");
         setLoading(false);
       }
     };
@@ -67,7 +69,7 @@ function VisionPCA() {
     fetchVision();
   }, []);
 
-  if (loading) return <Typography align="center">Cargando Vision...</Typography>;
+  if (loading) return <Typography align="center">Cargando Visión...</Typography>;
   if (error) return <Typography align="center" color="error">{error}</Typography>;
 
   return (
@@ -84,34 +86,30 @@ function VisionPCA() {
       >
         <Container maxWidth="lg">
           <Typography variant="h6" align="center" gutterBottom>
-            Vision de la Empresa
+            Visión de la Empresa
           </Typography>
           <Divider sx={{ my: 2 }} />
-          {vision.length === 0 ? (
+          {!visionActiva ? (
             <Typography align="center" color="text.secondary">
-              No hay vision disponibles.
+              No hay visión activa disponible.
             </Typography>
           ) : (
             <List>
-              {vision.map((vision) => (
-                <React.Fragment key={vision.id}>
-                  <ListItem alignItems="flex-start">
-                    <ListItemText
-                      primary={vision.titulo}
-                      secondary={
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.primary"
-                        >
-                          {vision.contenido}
-                        </Typography>
-                      }
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                </React.Fragment>
-              ))}
+              <ListItem alignItems="flex-start">
+                <ListItemText
+                  primary={visionActiva.titulo}
+                  secondary={
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      color="text.primary"
+                    >
+                      {visionActiva.contenido}
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <Divider component="li" />
             </List>
           )}
         </Container>

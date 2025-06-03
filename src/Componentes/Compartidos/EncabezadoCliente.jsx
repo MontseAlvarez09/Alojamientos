@@ -40,8 +40,8 @@ const EncabezadoCliente = () => {
       case "home":
         navigate('/cliente/');
         break;
-      case "productoscliente":
-        navigate('/cliente/Alojamientos');
+      case "hotelesc":
+        navigate('/cliente/hotelesc');
         break;
       case "MQTT":
         navigate('/cliente/perfilusuario');
@@ -200,7 +200,7 @@ const EncabezadoCliente = () => {
               <HomeOutlined style={{ color: 'var(--color-icon)' }} />
               Home
             </li>
-            <li onClick={() => handleMenuClick('productoscliente')}>
+            <li onClick={() => handleMenuClick('hotelesc')}>
               <ShopOutlined style={{ color: 'var(--color-icon)' }} />
               Alojamientos
             </li>

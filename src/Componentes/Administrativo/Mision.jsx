@@ -9,7 +9,8 @@ const Mision = () => {
     const [mision, setMision] = useState({
         titulo: '',
         contenido: '',
-        id_empresa: ''
+        id_empresa: '',
+        estado: 'activo'
     });
     const [misiones, setMisiones] = useState([]);
     const [perfiles, setPerfiles] = useState([]);
@@ -45,12 +46,7 @@ const Mision = () => {
                     [name]: value
                 });
             }
-        } else if (name === 'contenido') {
-            setMision({
-                ...mision,
-                [name]: value
-            });
-        } else if (name === 'id_empresa') {
+        } else if (name === 'contenido' || name === 'id_empresa') {
             setMision({
                 ...mision,
                 [name]: value
@@ -73,18 +69,18 @@ const Mision = () => {
 
         try {
             if (editingId) {
-                await axios.put(`http://localhost:3000/api/mision/${editingId}`, mision);
+                await axios.put(`https://backendd-q0zc.onrender.com/api/mision/${editingId}`, mision);
                 MySwal.fire({
                     title: 'Éxito!',
-                    text: 'La misión ha sido actualizada correctamente.',
+                    text: 'La misión ha sido actualizada correctamente y ahora está activa.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
             } else {
-                await axios.post('http://localhost:3000/api/mision', mision);
+                await axios.post('https://backendd-q0zc.onrender.com/api/mision', mision);
                 MySwal.fire({
                     title: 'Éxito!',
-                    text: 'La misión ha sido creada correctamente.',
+                    text: 'La misión ha sido creada correctamente y ahora está activa.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
@@ -93,10 +89,11 @@ const Mision = () => {
             setMision({
                 titulo: '',
                 contenido: '',
-                id_empresa: perfiles.length > 0 ? perfiles[0].id : ''
+                id_empresa: perfiles.length > 0 ? perfiles[0].id : '',
+                estado: 'activo'
             });
             setEditingId(null);
-            const response = await axios.get('http://localhost:3000/api/mision');
+            const response = await axios.get('https://backendd-q0zc.onrender.com/api/mision');
             setMisiones(response.data);
         } catch (error) {
             console.error('Error al guardar misión:', error.message);
@@ -123,7 +120,7 @@ const Mision = () => {
 
         if (result.isConfirmed) {
             try {
-                await axios.delete(`http://localhost:3000/api/mision/${id}`);
+                await axios.delete(`https://backendd-q0zc.onrender.com/api/mision/${id}`);
                 setMisiones(misiones.filter(m => m.id !== id));
                 MySwal.fire(
                     'Eliminado!',
@@ -145,7 +142,8 @@ const Mision = () => {
         setMision({
             titulo: mision.titulo,
             contenido: mision.contenido,
-            id_empresa: mision.id_empresa
+            id_empresa: mision.id_empresa,
+            estado: 'activo' // Al editar, la misión se establecerá como activa
         });
         setEditingId(mision.id);
     };
@@ -154,7 +152,8 @@ const Mision = () => {
         setMision({
             titulo: '',
             contenido: '',
-            id_empresa: perfiles.length > 0 ? perfiles[0].id : ''
+            id_empresa: perfiles.length > 0 ? perfiles[0].id : '',
+            estado: 'activo'
         });
         setEditingId(null);
     };
@@ -232,6 +231,7 @@ const Mision = () => {
                             <p><strong>Contenido:</strong> {mision.contenido}</p>
                             <p><strong>Fecha:</strong> {new Date(mision.fechahora).toLocaleString()}</p>
                             <p><strong>Empresa:</strong> {mision.NombreEmpresa}</p>
+                            <p><strong>Estado:</strong> {mision.estado === 'activo' ? 'Activo' : 'Inactivo'}</p>
                             <div style={styles.buttonGroup}>
                                 <button
                                     style={styles.editButton}

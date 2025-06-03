@@ -39,8 +39,8 @@ const theme = createTheme({
     },
 });
 
-// URL base del backend para desarrollo local
-const API_BASE_URL = "https://backendd-q0zc.onrender.com"; // Usar localhost para desarrollo local
+// URL base del backend
+const API_BASE_URL = "https://backendd-q0zc.onrender.com"; // Cambia esto según tu configuración
 
 function VerificarCorreo() {
     const [verificationCode, setVerificationCode] = useState("");
@@ -66,12 +66,11 @@ function VerificarCorreo() {
 
         try {
             console.log('Enviando solicitud de verificación para el código:', verificationCode);
-            const response = await axios.get(`${API_BASE_URL}/api/registro/verify/${verificationCode}`);
-            console.log('Respuesta del backend:', response.data);
+            await axios.get(`${API_BASE_URL}/api/registro/verify/${verificationCode}`);
             MySwal.fire({
                 icon: "success",
-                title: "Verificación exitosa",
-                text: response.data.message, // Mostrará "Correo verificado exitosamente. Tu cuenta ahora está activa."
+                title: "Correo electrónico validado",
+                text: "Redirigiendo al login.",
             }).then(() => {
                 navigate("/login"); // Redirección después de cerrar la alerta
             });
@@ -79,7 +78,13 @@ function VerificarCorreo() {
             console.error("Error al verificar el código:", error.response ? error.response.data : error.message);
             const errorMessage = error.response?.data?.error || "Ocurrió un error al verificar el código. Por favor, intenta de nuevo.";
             if (errorMessage === "La cuenta ya está verificada. Inicia sesión para continuar.") {
-                navigate("/login"); // Redirige al login sin mostrar alerta
+                MySwal.fire({
+                    icon: "info",
+                    title: "Cuenta verificada",
+                    text: "Redirigiendo al login.",
+                }).then(() => {
+                    navigate("/login"); // Redirige al login después de cerrar la alerta
+                });
             } else {
                 MySwal.fire({
                     icon: "error",

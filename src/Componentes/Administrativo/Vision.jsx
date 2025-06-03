@@ -9,7 +9,8 @@ const Vision = () => {
     const [vision, setVision] = useState({
         titulo: '',
         contenido: '',
-        id_empresa: ''
+        id_empresa: '',
+        estado: 'activo'
     });
     const [visiones, setVisiones] = useState([]);
     const [perfiles, setPerfiles] = useState([]);
@@ -45,12 +46,7 @@ const Vision = () => {
                     [name]: value
                 });
             }
-        } else if (name === 'contenido') {
-            setVision({
-                ...vision,
-                [name]: value
-            });
-        } else if (name === 'id_empresa') {
+        } else if (name === 'contenido' || name === 'id_empresa') {
             setVision({
                 ...vision,
                 [name]: value
@@ -76,7 +72,7 @@ const Vision = () => {
                 await axios.put(`https://backendd-q0zc.onrender.com/api/vision/${editingId}`, vision);
                 MySwal.fire({
                     title: 'Éxito!',
-                    text: 'La visión ha sido actualizada correctamente.',
+                    text: 'La visión ha sido actualizada correctamente y ahora está activa.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
@@ -84,7 +80,7 @@ const Vision = () => {
                 await axios.post('https://backendd-q0zc.onrender.com/api/vision', vision);
                 MySwal.fire({
                     title: 'Éxito!',
-                    text: 'La visión ha sido creada correctamente.',
+                    text: 'La visión ha sido creada correctamente y ahora está activa.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
@@ -93,7 +89,8 @@ const Vision = () => {
             setVision({
                 titulo: '',
                 contenido: '',
-                id_empresa: perfiles.length > 0 ? perfiles[0].id : ''
+                id_empresa: perfiles.length > 0 ? perfiles[0].id : '',
+                estado: 'activo'
             });
             setEditingId(null);
             const response = await axios.get('https://backendd-q0zc.onrender.com/api/vision');
@@ -145,7 +142,8 @@ const Vision = () => {
         setVision({
             titulo: vision.titulo,
             contenido: vision.contenido,
-            id_empresa: vision.id_empresa
+            id_empresa: vision.id_empresa,
+            estado: 'activo' // Al editar, la visión se establecerá como activa
         });
         setEditingId(vision.id);
     };
@@ -154,7 +152,8 @@ const Vision = () => {
         setVision({
             titulo: '',
             contenido: '',
-            id_empresa: perfiles.length > 0 ? perfiles[0].id : ''
+            id_empresa: perfiles.length > 0 ? perfiles[0].id : '',
+            estado: 'activo'
         });
         setEditingId(null);
     };
@@ -232,6 +231,7 @@ const Vision = () => {
                             <p><strong>Contenido:</strong> {vision.contenido}</p>
                             <p><strong>Fecha:</strong> {new Date(vision.fechahora).toLocaleString()}</p>
                             <p><strong>Empresa:</strong> {vision.NombreEmpresa}</p>
+                            <p><strong>Estado:</strong> {vision.estado === 'activo' ? 'Activo' : 'Inactivo'}</p>
                             <div style={styles.buttonGroup}>
                                 <button
                                     style={styles.editButton}

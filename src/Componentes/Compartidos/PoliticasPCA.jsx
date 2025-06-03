@@ -42,10 +42,10 @@ const theme = createTheme({
 });
 
 // URL base del backend para desarrollo local
-const API_BASE_URL = "https://backendd-q0zc.onrender.com";
+const API_BASE_URL = "https://backendd-q0zc.onrender.com"; // Cambia esto según tu configuración
 
 function PoliticasPCA() {
-  const [politicas, setPoliticas] = useState([]);
+  const [politicaActiva, setPoliticaActiva] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const theme = useTheme();
@@ -55,7 +55,9 @@ function PoliticasPCA() {
     const fetchPoliticas = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/politica`);
-        setPoliticas(response.data);
+        // Filtrar para obtener solo la política activa
+        const politica = response.data.find(p => p.estado === 'activo');
+        setPoliticaActiva(politica || null);
         setLoading(false);
       } catch (err) {
         console.error("Error al obtener políticas:", err);
@@ -87,31 +89,27 @@ function PoliticasPCA() {
             Políticas de la Empresa
           </Typography>
           <Divider sx={{ my: 2 }} />
-          {politicas.length === 0 ? (
+          {!politicaActiva ? (
             <Typography align="center" color="text.secondary">
-              No hay políticas disponibles.
+              No hay política activa disponible.
             </Typography>
           ) : (
             <List>
-              {politicas.map((politica) => (
-                <React.Fragment key={politica.id}>
-                  <ListItem alignItems="flex-start">
-                    <ListItemText
-                      primary={politica.titulo}
-                      secondary={
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.primary"
-                        >
-                          {politica.contenido}
-                        </Typography>
-                      }
-                    />
-                  </ListItem>
-                  <Divider component="li" />
-                </React.Fragment>
-              ))}
+              <ListItem alignItems="flex-start">
+                <ListItemText
+                  primary={politicaActiva.titulo}
+                  secondary={
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      color="text.primary"
+                    >
+                      {politicaActiva.contenido}
+                    </Typography>
+                  }
+                />
+              </ListItem>
+              <Divider component="li" />
             </List>
           )}
         </Container>

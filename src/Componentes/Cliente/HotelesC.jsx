@@ -43,7 +43,7 @@ const colors = {
   light: '#b3c9ca',      // color5 - Gris azulado claro
 };
 
-const HotelesP = () => {
+const HotelesC = () => {
   const [hoteles, setHoteles] = useState([]);
   const [ratings, setRatings] = useState({});
   const [userLocation, setUserLocation] = useState(null);
@@ -101,7 +101,7 @@ const HotelesP = () => {
   };
 
   const handleDetailsClick = (hotel) => {
-    navigate(`/detalles-hoteles/${hotel.id}`);
+    navigate(`/cliente/detalles-hoteles/${hotel.id}`);
   };
 
   const handleLocationClick = (hotel) => {
@@ -118,7 +118,7 @@ const HotelesP = () => {
   };
 
   const handleImageClick = (hotel) => {
-    navigate(`/cuartosp/${hotel.id}`);
+    navigate(`/cliente/cuartosc/${hotel.id}`);
   };
 
   const handleRatingChange = (hotelId, newValue) => {
@@ -395,4 +395,4 @@ const HotelesP = () => {
   );
 };
 
-export default HotelesP;
+export default HotelesC;

@@ -26,10 +26,23 @@ import PoliticasPCA from './Componentes/Compartidos/PoliticasPCA';
 import TerminosPCA from './Componentes/Compartidos/TerminosPCA';
 import VisionPCA from './Componentes/Compartidos/VisionPCA';
 import MisionPCA from './Componentes/Compartidos/MisionPCA';
+import Tipohabitacion from './Componentes/Administrativo/TiposHabitaciones';
+//rutas publicas
+import DetallesHotel from './Componentes/Publico/DetallesHotel';
+//rutas cliente
+import HotelesC from './Componentes/Cliente/HotelesC';
+import CuartosC from './Componentes/Cliente/CuartosC';
+import DetallesHabitacionC from './Componentes/Cliente/DetalleHabitacionC';
+import DetallesHotelC from './Componentes/Cliente/DetallesHotelC';
 
 const CuartosPWrapper = () => {
   const { idHotel } = useParams(); // Extrae idHotel de la URL
-  return <CuartosP idHotel={idHotel} />;
+  return <CuartosP idHotel={idHotel} />; 
+};
+const CuartosCWrapper = () => {
+  const { idHotel } = useParams(); // Extrae idHotel de la URL
+  return <CuartosC idHotel={idHotel} />;
+  
 };
 
 
@@ -53,17 +66,16 @@ const App = () => {
             <Route path="/terminospca" element={<TerminosPCA/>} />
             <Route path="/visionpca" element={<VisionPCA/>} />
             <Route path="/misionpca" element={<MisionPCA/>} />
+            <Route path="/detalles-hoteles/:id" element={<DetallesHotel />} />
             
             
-
             {/* Rutas para la administración */}
-
-
 
             <Route path="/admin" element={<PaginaPrincipalAdministrativa />} />
             <Route path="/admin/perfil" element={<Perfil />} />
             <Route path="/admin/hoteles" element={<HotelesR />} />
             <Route path="/admin/cuartos" element={<Cuartos />} />
+            <Route path="/admin/tiposhabitaciones" element={<Tipohabitacion />} />
             <Route path="admin/politicas" element={<Politicas/>} />
             <Route path="/admin/terminos" element={<Terminos />} />
             <Route path="/admin/vision" element={<Vision />} />
@@ -79,12 +91,10 @@ const App = () => {
             <Route path="/cliente/terminospca" element={<TerminosPCA/>} />
             <Route path="/cliente/visionpca" element={<VisionPCA/>} />
             <Route path="/cliente/misionpca" element={<MisionPCA/>} />
-
-            
-
-
-
-
+            <Route path="/cliente/hotelesc" element={<HotelesC/>} />
+            <Route path="/cliente/cuartosc/:idHotel" element={<CuartosCWrapper/>} />
+            <Route path="/cliente/detalles-habitacionc/:idHabitacion" element={<DetallesHabitacionC />} />
+             <Route path="/cliente/detalles-hoteles/:id" element={<DetallesHotelC />} />
 
             <Route path="/cliente" element={<PaginaPrincipalCliente />} />
             

@@ -157,7 +157,7 @@ const CuartosP = ({ idHotel }) => {
   };
 
   const handleCardClick = (id) => {
-    navigate(`/detalles-habitacion/${id}`);
+    navigate(`/cliente/detalles-habitacionc/${id}`);
   };
 
   const getStatusColor = (estado) => {
@@ -317,3 +317,4 @@ const CuartosP = ({ idHotel }) => {
 };
 
 export default CuartosP;
+

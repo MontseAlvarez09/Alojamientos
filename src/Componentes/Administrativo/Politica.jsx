@@ -9,7 +9,8 @@ const Politica = () => {
     const [politica, setPolitica] = useState({
         titulo: '',
         contenido: '',
-        id_empresa: ''
+        id_empresa: '',
+        estado: 'activo'
     });
     const [politicas, setPoliticas] = useState([]);
     const [perfiles, setPerfiles] = useState([]);
@@ -45,12 +46,7 @@ const Politica = () => {
                     [name]: value
                 });
             }
-        } else if (name === 'contenido') {
-            setPolitica({
-                ...politica,
-                [name]: value
-            });
-        } else if (name === 'id_empresa') {
+        } else if (name === 'contenido' || name === 'id_empresa') {
             setPolitica({
                 ...politica,
                 [name]: value
@@ -76,7 +72,7 @@ const Politica = () => {
                 await axios.put(`https://backendd-q0zc.onrender.com/api/politica/${editingId}`, politica);
                 MySwal.fire({
                     title: 'Éxito!',
-                    text: 'La política ha sido actualizada correctamente.',
+                    text: 'La política ha sido actualizada correctamente y ahora está activa.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
@@ -84,7 +80,7 @@ const Politica = () => {
                 await axios.post('https://backendd-q0zc.onrender.com/api/politica', politica);
                 MySwal.fire({
                     title: 'Éxito!',
-                    text: 'La política ha sido creada correctamente.',
+                    text: 'La política ha sido creada correctamente y ahora está activa.',
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
@@ -93,7 +89,8 @@ const Politica = () => {
             setPolitica({
                 titulo: '',
                 contenido: '',
-                id_empresa: perfiles.length > 0 ? perfiles[0].id : ''
+                id_empresa: perfiles.length > 0 ? perfiles[0].id : '',
+                estado: 'activo'
             });
             setEditingId(null);
             const response = await axios.get('https://backendd-q0zc.onrender.com/api/politica');
@@ -145,7 +142,8 @@ const Politica = () => {
         setPolitica({
             titulo: politica.titulo,
             contenido: politica.contenido,
-            id_empresa: politica.id_empresa
+            id_empresa: politica.id_empresa,
+            estado: 'activo' // Al editar, la política se establecerá como activa
         });
         setEditingId(politica.id);
     };
@@ -154,7 +152,8 @@ const Politica = () => {
         setPolitica({
             titulo: '',
             contenido: '',
-            id_empresa: perfiles.length > 0 ? perfiles[0].id : ''
+            id_empresa: perfiles.length > 0 ? perfiles[0].id : '',
+            estado: 'activo'
         });
         setEditingId(null);
     };
@@ -232,6 +231,7 @@ const Politica = () => {
                             <p><strong>Contenido:</strong> {politica.contenido}</p>
                             <p><strong>Fecha:</strong> {new Date(politica.fechahora).toLocaleString()}</p>
                             <p><strong>Empresa:</strong> {politica.NombreEmpresa}</p>
+                            <p><strong>Estado:</strong> {politica.estado === 'activo' ? 'Activo' : 'Inactivo'}</p>
                             <div style={styles.buttonGroup}>
                                 <button
                                     style={styles.editButton}
@@ -355,7 +355,7 @@ const styles = {
         cursor: 'pointer',
         fontWeight: '700',
         boxShadow: '0 6px 14px rgba(121, 174, 146, 0.5)',
-        transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+        transition: 'transform 0.25s ease, box-shadow 0.25s ease'
     },
     deleteButton: {
         background: 'linear-gradient(90deg, #79ae92, #5f7a8b)',
@@ -367,7 +367,7 @@ const styles = {
         cursor: 'pointer',
         fontWeight: 'normal',
         boxShadow: '0 6px 14px rgba(121, 174, 10, 0.5)',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
     },
     politicaItem: {
         padding: '15px',
